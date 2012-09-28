@@ -139,13 +139,6 @@ static int sparsebundle_show_usage(char* program_name)
     return 1;
 }
 
-static struct fuse_operations sparsebundle_filesystem_operations = {
-    .getattr = sparsebundle_getattr,
-    .open    = sparsebundle_open,
-    .read    = sparsebundle_read,
-    .readdir = sparsebundle_readdir,
-};
-
 static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
 {
     if (key == FUSE_OPT_KEY_NONOPT && !SB_DATA_CAST(data)->path) {
@@ -208,6 +201,12 @@ int main(int argc, char **argv)
             key.clear();
         }
     }
+
+    struct fuse_operations sparsebundle_filesystem_operations = {};
+    sparsebundle_filesystem_operations.getattr = sparsebundle_getattr;
+    sparsebundle_filesystem_operations.open = sparsebundle_open;
+    sparsebundle_filesystem_operations.read = sparsebundle_read;
+    sparsebundle_filesystem_operations.readdir = sparsebundle_readdir;
 
     int ret = fuse_main(args.argc, args.argv, &sparsebundle_filesystem_operations, &data);
 
