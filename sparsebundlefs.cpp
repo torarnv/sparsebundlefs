@@ -100,7 +100,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
         log("\tReading band %llu at offet %llu (bytes_read: %zu to_read: %zu\n",
             band_number, band_offset, bytes_read, to_read);
 
-        size_t read = 0;
+        ssize_t read = 0;
         int band_file = open(band_name, O_RDONLY);
         if (band_file != -1) {
             read = pread(band_file, buffer + bytes_read, to_read, band_offset);
