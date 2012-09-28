@@ -92,7 +92,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
         off_t band_number = (offset + bytes_read) / SB_DATA->band_size;
         off_t band_offset = (offset + bytes_read) % SB_DATA->band_size;
 
-        size_t to_read = length - bytes_read;
+        ssize_t to_read = length - bytes_read;
 
         char *band_name;
         asprintf(&band_name, "%s/bands/%jd", SB_DATA->path, intmax_t(band_number));
