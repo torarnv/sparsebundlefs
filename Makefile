@@ -1,7 +1,7 @@
 TARGET = sparsebundlefs
 
 PKG_CONFIG = pkg-config
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -O2
 
 ifeq ($(shell uname), Darwin)
 	# Pick up OSXFUSE, even with pkg-config from MacPorts
