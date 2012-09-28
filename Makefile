@@ -1,7 +1,7 @@
 TARGET = sparsebundlefs
 
 PKG_CONFIG = pkg-config
-CFLAGS = -Wall -O2
+CFLAGS = -Wall -O2 -march=native
 DEFINES = -DFUSE_USE_VERSION=26
 
 ifeq ($(shell uname), Darwin)
