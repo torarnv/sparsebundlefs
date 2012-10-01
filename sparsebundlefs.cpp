@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <fuse.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -16,8 +17,8 @@ static const char *image_path = "/sparsebundle.dmg";
 
 struct sparsebundle_data {
     char *path;
-    int band_size;
-    int size;
+    off_t band_size;
+    off_t size;
     FILE* logfile;
 };
 
@@ -151,6 +152,17 @@ static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fu
 
 using namespace std;
 
+static off_t read_size(const string &str)
+{
+    uintmax_t value = strtoumax(str.c_str(), 0, 10);
+    if (errno == ERANGE || value > numeric_limits<off_t>::max()) {
+        fprintf(stderr, "Disk image too large to be mounted (%s bytes)\n", str.c_str());
+        exit(-1);
+    }
+
+    return value;
+}
+
 int main(int argc, char **argv)
 {
     struct sparsebundle_data data = {};
@@ -192,11 +204,10 @@ int main(int argc, char **argv)
             line.erase(0, line.find_first_of('>') + 1);
             line.erase(line.find_first_of('<'));
 
-            if (key == "band-size") {
-                data.band_size = atoi(line.c_str());
-            } else if (key == "size") {
-                data.size = atoi(line.c_str());
-            }
+            if (key == "band-size")
+                data.band_size = read_size(line);
+            else if (key == "size")
+                data.size = read_size(line);
 
             key.clear();
         }
