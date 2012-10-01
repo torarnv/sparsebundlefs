@@ -57,6 +57,16 @@ You may then proceed to mount the `.dmg` file using regular means, *eg.*:
 
 This will give you read-only access to the content of the sparse-bundle disk image.
 
+### Reading Time Machine backups
+
+Time Machine builds on a feature of the HFS+ filesystem called *directory hard-links*. This allows multiple snapshots of the backup set to reference the same data, without having to maintain hard-links for every file in the backup set.
+
+Unfortunately this feature is not yet part of `mount.hfsplus`, so when navigating the mounted Time Machine image these directory hard-links will show up as empty files instead of directories. The real data still lives inside a directory named `.HFS+ Private Directory Data\r` at the root of the volume, but making the connection from a a zero-sized file to it's corresponding directory inside the secret data location is a bit cumbersome.
+
+Luckily there's another FUSE filesystem available, [tmfs][tmfs], which will allow you to re-mount an existing HFS+ volume and then navigate it as if the directory hard-links were regular directories. The syntax is similar to sparsebundlefs:
+
+    tmfs /mnt/tm-hfs-image /mnt/tm-root
+
 License
 -------
 
@@ -67,3 +77,4 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 [osxfuse]: http://osxfuse.github.com/ "Fuse for OSX"
 [fuse]: http://fuse.sourceforge.net/ "FUSE"
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
+[tmfs]: https://github.com/abique/tmfs "Time Machine File System"
