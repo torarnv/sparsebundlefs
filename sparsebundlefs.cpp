@@ -1,17 +1,20 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
-#include <fuse.h>
 #include <inttypes.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <string>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <streambuf>
-#include <iostream>
+#include <string>
+
+#include <fuse.h>
+
+using namespace std;
 
 static const char *image_path = "/sparsebundle.dmg";
 
@@ -19,7 +22,7 @@ struct sparsebundle_data {
     char *path;
     off_t band_size;
     off_t size;
-    FILE* logfile;
+    FILE *logfile;
 };
 
 #define SB_DATA_CAST(ptr) ((struct sparsebundle_data *) ptr)
@@ -134,7 +137,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
     return bytes_read;
 }
 
-static int sparsebundle_show_usage(char* program_name)
+static int sparsebundle_show_usage(char *program_name)
 {
     fprintf(stderr, "usage: %s [-o options] sparsebundle mountpoint\n", program_name);
     return 1;
@@ -149,8 +152,6 @@ static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fu
 
     return 1;
 }
-
-using namespace std;
 
 static off_t read_size(const string &str)
 {
