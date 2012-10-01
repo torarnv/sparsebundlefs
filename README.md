@@ -4,15 +4,14 @@ sparsebundlefs
 FUSE filesystem for reading Mac OS sparse-bundle disk images.
 
 Mac OS X v10.5 (Leopard) introduced the concept of sparse-bundle disk images, where the data is
-stored as a set of small fixed-size *band* files instead of as a single monolithic file. This
-allows for more effective backups of the disk image, as only the changed bands need to be
+stored as a collection of small, fixed-size *band*-files instead of as a single monolithic file. This
+allows for more efficient backups of the disk image, as only the changed bands need to be
 stored.
 
 One common source of sparse-bundles is Mac OS' backup utility, *Time Machine*, which stores
 the backup data within a sparse-bundle image on the chosen backup volume.
 
-This software package implements a FUSE virtual filesystem for read-only access to the sparse-
-bundle, as if it was a single monolithic image.
+This software package implements a FUSE virtual filesystem for read-only access to the sparse-bundle, as if it was a single monolithic image.
 
 Installation
 ------------
