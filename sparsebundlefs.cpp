@@ -155,7 +155,7 @@ using namespace std;
 static off_t read_size(const string &str)
 {
     uintmax_t value = strtoumax(str.c_str(), 0, 10);
-    if (errno == ERANGE || value > numeric_limits<off_t>::max()) {
+    if (errno == ERANGE || value > static_cast<uintmax_t>(numeric_limits<off_t>::max())) {
         fprintf(stderr, "Disk image too large to be mounted (%s bytes)\n", str.c_str());
         exit(-1);
     }
