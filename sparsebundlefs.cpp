@@ -96,9 +96,9 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
         ssize_t to_read = length - bytes_read;
 
         char *band_name;
-        asprintf(&band_name, "%s/bands/%jd", SB_DATA->path, intmax_t(band_number));
+        asprintf(&band_name, "%s/bands/%llx", SB_DATA->path, band_number);
 
-        log("\tReading band %llu at offet %llu (bytes_read: %zu to_read: %zu\n",
+        log("\tReading band %llx at offet %llu (bytes_read: %zu to_read: %zu\n",
             band_number, band_offset, bytes_read, to_read);
 
         ssize_t read = 0;
