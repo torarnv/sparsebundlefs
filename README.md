@@ -8,7 +8,7 @@ stored as a set of small fixed-size *band* files instead of as a single monolith
 allows for more effective backups of the disk image, as only the changed bands need to be
 stored.
 
-One common client of sparse-bundles is Mac OS's backup utility, *Time Machine*, which stores
+One common source of sparse-bundles is Mac OS' backup utility, *Time Machine*, which stores
 the backup data within a sparse-bundle image on the chosen backup volume.
 
 This software package implements a FUSE virtual filesystem for read-only access to the sparse-
