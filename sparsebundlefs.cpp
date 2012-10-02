@@ -132,7 +132,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
 
 static int sparsebundle_show_usage(char *program_name)
 {
-    fprintf(stderr, "usage: %s [-o options] sparsebundle mountpoint\n", program_name);
+    fprintf(stderr, "usage: %s [-o options] <sparsebundle> <mountpoint>\n", program_name);
     return 1;
 }
 
