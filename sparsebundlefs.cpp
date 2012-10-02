@@ -132,13 +132,22 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
 
 static int sparsebundle_show_usage(char *program_name)
 {
-    fprintf(stderr, "usage: %s [-o options] <sparsebundle> <mountpoint>\n", program_name);
+    fprintf(stderr, "usage: %s [-o options] [-f] [-D] <sparsebundle> <mountpoint>\n", program_name);
     return 1;
 }
 
+enum { SPARSEBUNDLE_OPT_DEBUG };
+
 static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
 {
-    if (key == FUSE_OPT_KEY_NONOPT && !SB_DATA_CAST(data)->path) {
+    switch (key) {
+    case SPARSEBUNDLE_OPT_DEBUG:
+        setlogmask(LOG_UPTO(LOG_DEBUG));
+        return 0;
+    case FUSE_OPT_KEY_NONOPT:
+        if (SB_DATA_CAST(data)->path)
+            return 1;
+
         SB_DATA_CAST(data)->path = strdup(arg);
         return 0;
     }
@@ -160,11 +169,16 @@ static off_t read_size(const string &str)
 int main(int argc, char **argv)
 {
     openlog("sparsebundlefs", LOG_CONS | LOG_PERROR, LOG_USER);
+    setlogmask(~(LOG_MASK(LOG_DEBUG)));
 
     struct sparsebundle_data data = {};
 
+    static struct fuse_opt sparsebundle_options[] = {
+        FUSE_OPT_KEY("-D",  SPARSEBUNDLE_OPT_DEBUG), FUSE_OPT_END
+    };
+
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
-    fuse_opt_parse(&args, &data, 0, sparsebundle_opt_proc);
+    fuse_opt_parse(&args, &data, sparsebundle_options, sparsebundle_opt_proc);
 
     if (!data.path)
         return sparsebundle_show_usage(argv[0]);
