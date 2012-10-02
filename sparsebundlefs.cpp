@@ -212,10 +212,5 @@ int main(int argc, char **argv)
     sparsebundle_filesystem_operations.read = sparsebundle_read;
     sparsebundle_filesystem_operations.readdir = sparsebundle_readdir;
 
-    int ret = fuse_main(args.argc, args.argv, &sparsebundle_filesystem_operations, &data);
-
-    fuse_opt_free_args(&args);
-    closelog ();
-
-    return ret;
+    return fuse_main(args.argc, args.argv, &sparsebundle_filesystem_operations, &data);
 }
