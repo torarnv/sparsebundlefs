@@ -179,6 +179,7 @@ int main(int argc, char **argv)
 
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     fuse_opt_parse(&args, &data, sparsebundle_options, sparsebundle_opt_proc);
+    fuse_opt_add_arg(&args, "-oro"); // Force read-only mount
 
     if (!data.path)
         return sparsebundle_show_usage(argv[0]);
