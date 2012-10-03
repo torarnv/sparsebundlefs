@@ -16,7 +16,7 @@
 
 using namespace std;
 
-static const char *image_path = "/sparsebundle.dmg";
+static const char image_path[] = "/sparsebundle.dmg";
 
 struct sparsebundle_data {
     char *path;
@@ -202,7 +202,7 @@ int main(int argc, char **argv)
 
     string key, line;
     while (getline(plist_data, line)) {
-        static const char *whitespace_chars = " \n\r\t";
+        static const char whitespace_chars[] = " \n\r\t";
         line.erase(0, line.find_first_not_of(whitespace_chars));
         line.erase(line.find_last_not_of(whitespace_chars) + 1);
 
