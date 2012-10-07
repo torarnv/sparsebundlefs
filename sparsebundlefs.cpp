@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <syslog.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -87,7 +88,8 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
         off_t band_number = (offset + bytes_read) / SB_DATA->band_size;
         off_t band_offset = (offset + bytes_read) % SB_DATA->band_size;
 
-        ssize_t to_read = length - bytes_read;
+        ssize_t to_read = min(static_cast<off_t>(length - bytes_read),
+            SB_DATA->band_size - band_offset);
 
         char *band_name;
         asprintf(&band_name, "%s/bands/%llx", SB_DATA->path, band_number);
