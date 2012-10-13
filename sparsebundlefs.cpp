@@ -5,13 +5,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <string.h>
 
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <map>
 #include <sstream>
 #include <streambuf>
 #include <string>
+#include <vector>
 
 #include <fuse.h>
 
