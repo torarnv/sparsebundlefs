@@ -96,7 +96,10 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
             SB_DATA->band_size - band_offset);
 
         char *band_name;
-        asprintf(&band_name, "%s/bands/%llx", SB_DATA->path, band_number);
+        if (asprintf(&band_name, "%s/bands/%llx", SB_DATA->path, band_number) == -1) {
+            syslog(LOG_ERR, "failed to resolve band name");
+            return -1;
+        }
 
         syslog(LOG_DEBUG, "reading %zu bytes from band %llx at offset %llu",
             to_read, band_number, band_offset);
@@ -200,7 +203,10 @@ int main(int argc, char **argv)
     data.path = abs_path;
 
     char *plist_path;
-    asprintf(&plist_path, "%s/Info.plist", data.path);
+    if (asprintf(&plist_path, "%s/Info.plist", data.path) == -1) {
+        perror("Failed to resolve Info.plist path");
+        return -1;
+    }
 
     ifstream plist_file(plist_path);
     stringstream plist_data;
