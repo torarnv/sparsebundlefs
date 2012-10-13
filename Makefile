@@ -14,7 +14,7 @@ endif
 FUSE_FLAGS := $(shell $(PKG_CONFIG) fuse --cflags --libs)
 
 $(TARGET): sparsebundlefs.cpp
-	$(CXX) $(CFLAGS) $(FUSE_FLAGS) $(LFLAGS) $(DEFINES) $< -o $@
+	$(CXX) $< -o $@ $(CFLAGS) $(FUSE_FLAGS) $(LFLAGS) $(DEFINES)
 
 all: $(TARGET)
 
