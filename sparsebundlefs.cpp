@@ -103,7 +103,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
         char *band_name;
         if (asprintf(&band_name, "%s/bands/%llx", SB_DATA->path, band_number) == -1) {
             syslog(LOG_ERR, "failed to resolve band name");
-            return -1;
+            return -errno;
         }
 
         syslog(LOG_DEBUG, "reading %zu bytes from band %llx at offset %llu",
@@ -118,12 +118,12 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
             if (read == -1) {
                 syslog(LOG_ERR, "failed to read band: %s", strerror(errno));
                 free(band_name);
-                return -1;
+                return -errno;
             }
         } else if (errno != ENOENT) {
             syslog(LOG_ERR, "failed to open band %s: %s", band_name, strerror(errno));
             free(band_name);
-            return -1;
+            return -errno;
         }
 
         free(band_name);
@@ -187,7 +187,7 @@ static off_t read_size(const string &str)
     uintmax_t value = strtoumax(str.c_str(), 0, 10);
     if (errno == ERANGE || value > static_cast<uintmax_t>(numeric_limits<off_t>::max())) {
         fprintf(stderr, "Disk image too large to be mounted (%s bytes)\n", str.c_str());
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 
     return value;
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
     char *abs_path = realpath(data.path, 0);
     if (!abs_path) {
         perror("Could not resolve absolute path");
-        return -1;
+        return EXIT_FAILURE;
     }
 
     free(data.path);
@@ -223,7 +223,7 @@ int main(int argc, char **argv)
     char *plist_path;
     if (asprintf(&plist_path, "%s/Info.plist", data.path) == -1) {
         perror("Failed to resolve Info.plist path");
-        return -1;
+        return EXIT_FAILURE;
     }
 
     ifstream plist_file(plist_path);
