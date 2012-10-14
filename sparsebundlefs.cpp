@@ -78,8 +78,14 @@ static int sparsebundle_open(const char *path, struct fuse_file_info *fi)
     return 0;
 }
 
-static int sparsebundle_read(const char *path, char *buffer, size_t length, off_t offset,
-           struct fuse_file_info *fi)
+struct sparsebundle_read_operations {
+    int (*process_band) (const char *, size_t, off_t, void*);
+    int (*pad_with_zeroes) (size_t, void*);
+    void *data;
+};
+
+static int sparsebundle_iterate_bands(const char *path, size_t length, off_t offset,
+           struct fuse_file_info *fi, struct sparsebundle_read_operations *read_ops)
 {
     if (strcmp(path, image_path) != 0)
         return -ENOENT;
@@ -90,7 +96,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
     if (offset + length > SB_DATA->size)
         length = SB_DATA->size - offset;
 
-    syslog(LOG_DEBUG, "asked to read %zu bytes at offset %llu", length, offset);
+    syslog(LOG_DEBUG, "iterating %zu bytes at offset %llu", length, offset);
 
     size_t bytes_read = 0;
     while (bytes_read < length) {
@@ -106,22 +112,11 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
             return -errno;
         }
 
-        syslog(LOG_DEBUG, "reading %zu bytes from band %llx at offset %llu",
+        syslog(LOG_DEBUG, "processing %zu bytes from band %llx at offset %llu",
             to_read, band_number, band_offset);
 
-        ssize_t read = 0;
-        int band_file = open(band_name, O_RDONLY);
-        if (band_file != -1) {
-            read = pread(band_file, buffer + bytes_read, to_read, band_offset);
-            close(band_file);
-
-            if (read == -1) {
-                syslog(LOG_ERR, "failed to read band: %s", strerror(errno));
-                free(band_name);
-                return -errno;
-            }
-        } else if (errno != ENOENT) {
-            syslog(LOG_ERR, "failed to open band %s: %s", band_name, strerror(errno));
+        ssize_t read = read_ops->process_band(band_name, to_read, band_offset, read_ops->data);
+        if (read < 0) {
             free(band_name);
             return -errno;
         }
@@ -129,19 +124,75 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
         free(band_name);
 
         if (read < to_read) {
+            to_read = to_read - read;
             syslog(LOG_DEBUG, "missing %zu bytes from band %llx, padding with zeroes",
-                to_read - read, band_number);
-            memset(buffer + bytes_read + read, 0, to_read - read);
+                to_read, band_number);
+            read_ops->pad_with_zeroes(to_read, read_ops->data);
+            read += to_read;
         }
 
-        bytes_read += to_read;
+        bytes_read += read;
 
-        syslog(LOG_DEBUG, "done reading from band %llx, %zu bytes left to read",
+        syslog(LOG_DEBUG, "done processing band %llx, %zu bytes left to read",
                 band_number, length - bytes_read);
     }
 
     assert(bytes_read == length);
     return bytes_read;
+}
+
+static int sparsebundle_read_process_band(const char *band_name, size_t length, off_t offset, void *read_data)
+{
+    size_t read = 0;
+
+    char** buffer = static_cast<char**>(read_data);
+
+    syslog(LOG_DEBUG, "reading %zu bytes at offset %llu into %p",
+        length, offset, *buffer);
+
+    int band_file = open(band_name, O_RDONLY);
+    if (band_file != -1) {
+        read = pread(band_file, *buffer, length, offset);
+        close(band_file);
+
+        if (read == -1) {
+            syslog(LOG_ERR, "failed to read band: %s", strerror(errno));
+            return -errno;
+        }
+    } else if (errno != ENOENT) {
+        syslog(LOG_ERR, "failed to open band %s: %s", band_name, strerror(errno));
+        return -errno;
+    }
+
+    *buffer += read;
+
+    return read;
+}
+
+static int sparsebundle_read_pad_with_zeroes(size_t length, void *read_data)
+{
+    char** buffer = static_cast<char**>(read_data);
+
+    syslog(LOG_DEBUG, "padding %zu bytes of zeroes into %p", length, *buffer);
+
+    memset(*buffer, 0, length);
+    *buffer += length;
+
+    return 0;
+}
+
+static int sparsebundle_read(const char *path, char *buffer, size_t length, off_t offset,
+           struct fuse_file_info *fi)
+{
+    sparsebundle_read_operations read_ops = {
+        &sparsebundle_read_process_band,
+        sparsebundle_read_pad_with_zeroes,
+        &buffer
+    };
+
+    syslog(LOG_DEBUG, "asked to read %zu bytes at offset %llu", length, offset);
+
+    return sparsebundle_iterate_bands(path, length, offset, fi, &read_ops);
 }
 
 static int sparsebundle_release(const char *path, struct fuse_file_info *fi)
