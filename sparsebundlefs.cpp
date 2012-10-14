@@ -127,8 +127,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
             to_read = to_read - read;
             syslog(LOG_DEBUG, "missing %zu bytes from band %llx, padding with zeroes",
                 to_read, band_number);
-            read_ops->pad_with_zeroes(to_read, read_ops->data);
-            read += to_read;
+            read += read_ops->pad_with_zeroes(to_read, read_ops->data);
         }
 
         bytes_read += read;
@@ -143,7 +142,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
 
 static int sparsebundle_read_process_band(const char *band_path, size_t length, off_t offset, void *read_data)
 {
-    size_t read = 0;
+    ssize_t read = 0;
 
     char** buffer = static_cast<char**>(read_data);
 
@@ -178,7 +177,7 @@ static int sparsebundle_read_pad_with_zeroes(size_t length, void *read_data)
     memset(*buffer, 0, length);
     *buffer += length;
 
-    return 0;
+    return length;
 }
 
 static int sparsebundle_read(const char *path, char *buffer, size_t length, off_t offset,
