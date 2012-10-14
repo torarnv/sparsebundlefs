@@ -251,6 +251,9 @@ int main(int argc, char **argv)
         }
     }
 
+    syslog(LOG_DEBUG, "initialized %s, band size %llu, total size %llu",
+        data.path, data.band_size, data.size);
+
     struct fuse_operations sparsebundle_filesystem_operations = {};
     sparsebundle_filesystem_operations.getattr = sparsebundle_getattr;
     sparsebundle_filesystem_operations.open = sparsebundle_open;
