@@ -106,8 +106,8 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
         ssize_t to_read = min(static_cast<off_t>(length - bytes_read),
             SB_DATA->band_size - band_offset);
 
-        char *band_name;
-        if (asprintf(&band_name, "%s/bands/%llx", SB_DATA->path, band_number) == -1) {
+        char *band_path;
+        if (asprintf(&band_path, "%s/bands/%llx", SB_DATA->path, band_number) == -1) {
             syslog(LOG_ERR, "failed to resolve band name");
             return -errno;
         }
@@ -115,13 +115,13 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
         syslog(LOG_DEBUG, "processing %zu bytes from band %llx at offset %llu",
             to_read, band_number, band_offset);
 
-        ssize_t read = read_ops->process_band(band_name, to_read, band_offset, read_ops->data);
+        ssize_t read = read_ops->process_band(band_path, to_read, band_offset, read_ops->data);
         if (read < 0) {
-            free(band_name);
+            free(band_path);
             return -errno;
         }
 
-        free(band_name);
+        free(band_path);
 
         if (read < to_read) {
             to_read = to_read - read;
@@ -141,7 +141,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
     return bytes_read;
 }
 
-static int sparsebundle_read_process_band(const char *band_name, size_t length, off_t offset, void *read_data)
+static int sparsebundle_read_process_band(const char *band_path, size_t length, off_t offset, void *read_data)
 {
     size_t read = 0;
 
@@ -150,7 +150,7 @@ static int sparsebundle_read_process_band(const char *band_name, size_t length, 
     syslog(LOG_DEBUG, "reading %zu bytes at offset %llu into %p",
         length, offset, *buffer);
 
-    int band_file = open(band_name, O_RDONLY);
+    int band_file = open(band_path, O_RDONLY);
     if (band_file != -1) {
         read = pread(band_file, *buffer, length, offset);
         close(band_file);
@@ -160,7 +160,7 @@ static int sparsebundle_read_process_band(const char *band_name, size_t length, 
             return -errno;
         }
     } else if (errno != ENOENT) {
-        syslog(LOG_ERR, "failed to open band %s: %s", band_name, strerror(errno));
+        syslog(LOG_ERR, "failed to open band %s: %s", band_path, strerror(errno));
         return -errno;
     }
 
