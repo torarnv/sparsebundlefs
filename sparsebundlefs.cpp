@@ -85,7 +85,7 @@ struct sparsebundle_read_operations {
 };
 
 static int sparsebundle_iterate_bands(const char *path, size_t length, off_t offset,
-           struct fuse_file_info *fi, struct sparsebundle_read_operations *read_ops)
+           struct sparsebundle_read_operations *read_ops)
 {
     if (strcmp(path, image_path) != 0)
         return -ENOENT;
@@ -192,7 +192,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
 
     syslog(LOG_DEBUG, "asked to read %zu bytes at offset %llu", length, offset);
 
-    return sparsebundle_iterate_bands(path, length, offset, fi, &read_ops);
+    return sparsebundle_iterate_bands(path, length, offset, &read_ops);
 }
 
 static int sparsebundle_release(const char *path, struct fuse_file_info *fi)
