@@ -27,6 +27,7 @@ struct sparsebundle_data {
     char *path;
     off_t band_size;
     off_t size;
+    off_t times_opened;
 };
 
 #define SB_DATA_CAST(ptr) ((struct sparsebundle_data *) ptr)
@@ -69,6 +70,10 @@ static int sparsebundle_open(const char *path, struct fuse_file_info *fi)
 
     if ((fi->flags & O_ACCMODE) != O_RDONLY)
         return -EACCES;
+
+    SB_DATA->times_opened++;
+    syslog(LOG_DEBUG, "opened %s, now referenced %llx times",
+        SB_DATA->path, SB_DATA->times_opened);
 
     return 0;
 }
@@ -137,6 +142,19 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
 
     assert(bytes_read == length);
     return bytes_read;
+}
+
+static int sparsebundle_release(const char *path, struct fuse_file_info *fi)
+{
+    SB_DATA->times_opened--;
+    syslog(LOG_DEBUG, "closed %s, now referenced %llx times",
+        SB_DATA->path, SB_DATA->times_opened);
+
+    if (SB_DATA->times_opened == 0) {
+        syslog(LOG_DEBUG, "no more references to sparsebundle, cleaning up");
+    }
+
+    return 0;
 }
 
 static int sparsebundle_show_usage(char *program_name)
@@ -238,6 +256,7 @@ int main(int argc, char **argv)
     sparsebundle_filesystem_operations.open = sparsebundle_open;
     sparsebundle_filesystem_operations.read = sparsebundle_read;
     sparsebundle_filesystem_operations.readdir = sparsebundle_readdir;
+    sparsebundle_filesystem_operations.release = sparsebundle_release;
 
     return fuse_main(args.argc, args.argv, &sparsebundle_filesystem_operations, &data);
 }
