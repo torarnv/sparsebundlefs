@@ -39,32 +39,43 @@ struct sparsebundle_data {
 #define SB_DATA_CAST(ptr) ((struct sparsebundle_data *) ptr)
 #define SB_DATA (SB_DATA_CAST(fuse_get_context()->private_data))
 
-static int sparsebundle_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-              off_t offset, struct fuse_file_info *fi)
-{
-    if (strcmp(path, "/") != 0)
-        return -ENOENT;
-
-    filler(buf, ".", 0, 0);
-    filler(buf, "..", 0, 0);
-    filler(buf, image_path + 1, 0, 0);
-
-    return 0;
-}
-
 static int sparsebundle_getattr(const char *path, struct stat *stbuf)
 {
     memset(stbuf, 0, sizeof(struct stat));
 
+    struct stat bundle_stat;
+    stat(SB_DATA->path, &bundle_stat);
+
     if (strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0755;
         stbuf->st_nlink = 3;
+        stbuf->st_size = sizeof(sparsebundle_data);
     } else if (strcmp(path, image_path) == 0) {
         stbuf->st_mode = S_IFREG | 0444;
         stbuf->st_nlink = 1;
         stbuf->st_size = SB_DATA->size;
     } else
         return -ENOENT;
+
+    stbuf->st_atime = bundle_stat.st_atime;
+    stbuf->st_mtime = bundle_stat.st_mtime;
+    stbuf->st_ctime = bundle_stat.st_ctime;
+
+    return 0;
+}
+
+static int sparsebundle_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+              off_t offset, struct fuse_file_info *fi)
+{
+    if (strcmp(path, "/") != 0)
+        return -ENOENT;
+
+    struct stat image_stat;
+    sparsebundle_getattr(image_path, &image_stat);
+
+    filler(buf, ".", 0, 0);
+    filler(buf, "..", 0, 0);
+    filler(buf, image_path + 1, &image_stat, 0);
 
     return 0;
 }
