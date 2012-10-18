@@ -47,7 +47,7 @@ static int sparsebundle_getattr(const char *path, struct stat *stbuf)
     stat(SB_DATA->path, &bundle_stat);
 
     if (strcmp(path, "/") == 0) {
-        stbuf->st_mode = S_IFDIR | 0755;
+        stbuf->st_mode = S_IFDIR | 0555;
         stbuf->st_nlink = 3;
         stbuf->st_size = sizeof(sparsebundle_data);
     } else if (strcmp(path, image_path) == 0) {
