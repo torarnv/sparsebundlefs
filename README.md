@@ -3,6 +3,8 @@ sparsebundlefs
 
 FUSE filesystem for reading Mac OS sparse-bundle disk images.
 
+[![Build Status][buildstatus]][travisci]
+
 Mac OS X v10.5 (Leopard) introduced the concept of sparse-bundle disk images, where the data is
 stored as a collection of small, fixed-size *band*-files instead of as a single monolithic file. This
 allows for more efficient backups of the disk image, as only the changed bands need to be
@@ -111,6 +113,8 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 
 
 
+[buildstatus]: https://secure.travis-ci.org/torarnv/sparsebundlefs.png?branch=master
+[travisci]: https://travis-ci.org/torarnv/sparsebundlefs
 [osxfuse]: http://osxfuse.github.com/ "Fuse for OSX"
 [fuse]: http://fuse.sourceforge.net/ "FUSE"
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
