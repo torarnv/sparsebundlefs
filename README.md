@@ -106,6 +106,15 @@ Luckily there's another FUSE filesystem available, [tmfs][tmfs], which will allo
 
     tmfs /mnt/tm-hfs-image /mnt/tm-root
 
+### Troubleshooting
+
+If any of the above operations fail, you may try running `sparsebundlefs` in debug mode, where it will dump lots of debug output to the console:
+
+    sparsebundlefs ~/MyDiskImage.sparsebundle /tmp/my-disk-image -s -f -D
+
+The `-s` and `-f` options ensure that `sparsebundlefs` runs single-threaded and in the foreground, and the `-D` option turns on the debug logging. You should not see any errors in the log output, and if you suspect that the disk image is corrupted you may compare the read operations against a known good disk image.
+
+
 License
 -------
 

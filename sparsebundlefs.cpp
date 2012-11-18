@@ -345,7 +345,7 @@ static int sparsebundle_release(const char *path, struct fuse_file_info *fi)
 
 static int sparsebundle_show_usage(char *program_name)
 {
-    fprintf(stderr, "usage: %s [-o options] [-f] [-D] <sparsebundle> <mountpoint>\n", program_name);
+    fprintf(stderr, "usage: %s [-o options] [-s] [-f] [-D] <sparsebundle> <mountpoint>\n", program_name);
     return 1;
 }
 
