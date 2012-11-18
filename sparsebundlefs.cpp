@@ -90,8 +90,8 @@ static int sparsebundle_open(const char *path, struct fuse_file_info *fi)
         return -EACCES;
 
     SB_DATA->times_opened++;
-    syslog(LOG_DEBUG, "opened %s, now referenced %llx times",
-        SB_DATA->path, SB_DATA->times_opened);
+    syslog(LOG_DEBUG, "opened %s, now referenced %ju times",
+        SB_DATA->path, uintmax_t(SB_DATA->times_opened));
 
     return 0;
 }
@@ -114,7 +114,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
     if (offset + length > SB_DATA->size)
         length = SB_DATA->size - offset;
 
-    syslog(LOG_DEBUG, "iterating %zu bytes at offset %llu", length, offset);
+    syslog(LOG_DEBUG, "iterating %zu bytes at offset %ju", length, uintmax_t(offset));
 
     size_t bytes_read = 0;
     while (bytes_read < length) {
@@ -125,13 +125,13 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
             SB_DATA->band_size - band_offset);
 
         char *band_path;
-        if (asprintf(&band_path, "%s/bands/%llx", SB_DATA->path, band_number) == -1) {
+        if (asprintf(&band_path, "%s/bands/%jx", SB_DATA->path, uintmax_t(band_number)) == -1) {
             syslog(LOG_ERR, "failed to resolve band name");
             return -errno;
         }
 
-        syslog(LOG_DEBUG, "processing %zu bytes from band %llx at offset %llu",
-            to_read, band_number, band_offset);
+        syslog(LOG_DEBUG, "processing %zu bytes from band %jx at offset %ju",
+            to_read, uintmax_t(band_number), uintmax_t(band_offset));
 
         ssize_t read = read_ops->process_band(band_path, to_read, band_offset, read_ops->data);
         if (read < 0) {
@@ -143,15 +143,15 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
 
         if (read < to_read) {
             to_read = to_read - read;
-            syslog(LOG_DEBUG, "missing %zu bytes from band %llx, padding with zeroes",
-                to_read, band_number);
+            syslog(LOG_DEBUG, "missing %zu bytes from band %jx, padding with zeroes",
+                to_read, uintmax_t(band_number));
             read += read_ops->pad_with_zeroes(to_read, read_ops->data);
         }
 
         bytes_read += read;
 
-        syslog(LOG_DEBUG, "done processing band %llx, %zu bytes left to read",
-                band_number, length - bytes_read);
+        syslog(LOG_DEBUG, "done processing band %jx, %zu bytes left to read",
+                uintmax_t(band_number), length - bytes_read);
     }
 
     assert(bytes_read == length);
@@ -164,8 +164,8 @@ static int sparsebundle_read_process_band(const char *band_path, size_t length, 
 
     char** buffer = static_cast<char**>(read_data);
 
-    syslog(LOG_DEBUG, "reading %zu bytes at offset %llu into %p",
-        length, offset, *buffer);
+    syslog(LOG_DEBUG, "reading %zu bytes at offset %ju into %p",
+        length, uintmax_t(offset), *buffer);
 
     int band_file = open(band_path, O_RDONLY);
     if (band_file != -1) {
@@ -207,7 +207,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
         &buffer
     };
 
-    syslog(LOG_DEBUG, "asked to read %zu bytes at offset %llu", length, offset);
+    syslog(LOG_DEBUG, "asked to read %zu bytes at offset %ju", length, uintmax_t(offset));
 
     return sparsebundle_iterate_bands(path, length, offset, &read_ops);
 }
@@ -234,7 +234,8 @@ static int sparsebundle_read_buf_process_band(const char *band_path, size_t leng
 
     vector<fuse_buf> *buffers = static_cast<vector<fuse_buf>*>(read_data);
 
-    syslog(LOG_DEBUG, "preparing %zu bytes at offset %llu", length, offset);
+    syslog(LOG_DEBUG, "preparing %zu bytes at offset %ju", length,
+        uintmax_t(offset));
 
     int band_file_fd = sparsebundle_read_buf_prepare_file(band_path);
     if (band_file_fd != -1) {
@@ -290,8 +291,8 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
         &buffers
     };
 
-    syslog(LOG_DEBUG, "asked to read %zu bytes at offset %llu using zero-copy read",
-        length, offset);
+    syslog(LOG_DEBUG, "asked to read %zu bytes at offset %ju using zero-copy read",
+        length, uintmax_t(offset));
 
     static struct rlimit fd_limit = { -1, -1 };
     if (fd_limit.rlim_cur < 0)
@@ -327,8 +328,8 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
 static int sparsebundle_release(const char *path, struct fuse_file_info *fi)
 {
     SB_DATA->times_opened--;
-    syslog(LOG_DEBUG, "closed %s, now referenced %llx times",
-        SB_DATA->path, SB_DATA->times_opened);
+    syslog(LOG_DEBUG, "closed %s, now referenced %ju times",
+        SB_DATA->path, uintmax_t(SB_DATA->times_opened));
 
     if (SB_DATA->times_opened == 0) {
         syslog(LOG_DEBUG, "no more references, cleaning up");
@@ -370,7 +371,7 @@ static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fu
 static off_t read_size(const string &str)
 {
     uintmax_t value = strtoumax(str.c_str(), 0, 10);
-    if (errno == ERANGE || value > static_cast<uintmax_t>(numeric_limits<off_t>::max())) {
+    if (errno == ERANGE || value > uintmax_t(numeric_limits<off_t>::max())) {
         fprintf(stderr, "Disk image too large to be mounted (%s bytes)\n", str.c_str());
         exit(EXIT_FAILURE);
     }
@@ -436,8 +437,8 @@ int main(int argc, char **argv)
         }
     }
 
-    syslog(LOG_DEBUG, "initialized %s, band size %llu, total size %llu",
-        data.path, data.band_size, data.size);
+    syslog(LOG_DEBUG, "initialized %s, band size %ju, total size %ju",
+        data.path, uintmax_t(data.band_size), uintmax_t(data.size));
 
     struct fuse_operations sparsebundle_filesystem_operations = {};
     sparsebundle_filesystem_operations.getattr = sparsebundle_getattr;
