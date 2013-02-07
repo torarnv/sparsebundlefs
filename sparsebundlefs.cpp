@@ -387,7 +387,8 @@ int main(int argc, char **argv)
     struct sparsebundle_data data = {};
 
     static struct fuse_opt sparsebundle_options[] = {
-        FUSE_OPT_KEY("-D",  SPARSEBUNDLE_OPT_DEBUG), FUSE_OPT_END
+        FUSE_OPT_KEY("-D",  SPARSEBUNDLE_OPT_DEBUG),
+        { 0, 0, 0 } // End of options
     };
 
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
