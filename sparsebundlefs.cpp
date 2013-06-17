@@ -30,7 +30,7 @@ static const char image_path[] = "/sparsebundle.dmg";
 struct sparsebundle_data {
     char *path;
     off_t band_size;
-    off_t size;
+    size_t size;
     off_t times_opened;
 #if FUSE_SUPPORTS_ZERO_COPY
     map<string, int> open_files;
@@ -108,7 +108,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
     if (strcmp(path, image_path) != 0)
         return -ENOENT;
 
-    if (offset >= SB_DATA->size)
+    if ((size_t) offset >= SB_DATA->size)
         return 0;
 
     if (offset + length > SB_DATA->size)
