@@ -30,7 +30,7 @@ static const char image_path[] = "/sparsebundle.dmg";
 struct sparsebundle_data {
     char *path;
     off_t band_size;
-    off_t size;
+    size_t size;
     off_t times_opened;
 #if FUSE_SUPPORTS_ZERO_COPY
     map<string, int> open_files;
@@ -108,7 +108,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
     if (strcmp(path, image_path) != 0)
         return -ENOENT;
 
-    if (offset >= SB_DATA->size)
+    if ((size_t) offset >= SB_DATA->size)
         return 0;
 
     if (offset + length > SB_DATA->size)
@@ -248,7 +248,7 @@ static int sparsebundle_read_buf_process_band(const char *band_path, size_t leng
     }
 
     if (read > 0) {
-        fuse_buf buffer = { read, fuse_buf_flags(FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK), 0, band_file_fd, offset };
+        fuse_buf buffer = { (size_t) read, fuse_buf_flags(FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK), 0, band_file_fd, offset };
         buffers->push_back(buffer);
     }
 
@@ -269,7 +269,7 @@ static int sparsebundle_read_buf_pad_with_zeroes(size_t length, void *read_data)
 
 static void sparsebundle_read_buf_close_files()
 {
-    syslog(LOG_DEBUG, "closing %u open file descriptor(s)", SB_DATA->open_files.size());
+    syslog(LOG_DEBUG, "closing %lu open file descriptor(s)", SB_DATA->open_files.size());
 
     map<string, int>::iterator iter;
     for(iter = SB_DATA->open_files.begin(); iter != SB_DATA->open_files.end(); ++iter)
@@ -294,7 +294,7 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
     syslog(LOG_DEBUG, "asked to read %zu bytes at offset %ju using zero-copy read",
         length, uintmax_t(offset));
 
-    static struct rlimit fd_limit = { -1, -1 };
+    static struct rlimit fd_limit = { (rlim_t) -1, (rlim_t) -1 };
     if (fd_limit.rlim_cur < 0)
         getrlimit(RLIMIT_NOFILE, &fd_limit);
 
@@ -318,7 +318,7 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
 
     copy(buffers.begin(), buffers.end(), buffer_vector->buf);
 
-    syslog(LOG_DEBUG, "returning %d buffers to fuse", buffer_vector->count);
+    syslog(LOG_DEBUG, "returning %zd buffers to fuse", buffer_vector->count);
     *bufp = buffer_vector;
 
     return ret;
