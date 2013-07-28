@@ -66,7 +66,7 @@ static int sparsebundle_getattr(const char *path, struct stat *stbuf)
 }
 
 static int sparsebundle_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-              off_t offset, struct fuse_file_info *fi)
+              off_t /* offset */, struct fuse_file_info *)
 {
     if (strcmp(path, "/") != 0)
         return -ENOENT;
@@ -199,7 +199,7 @@ static int sparsebundle_read_pad_with_zeroes(size_t length, void *read_data)
 }
 
 static int sparsebundle_read(const char *path, char *buffer, size_t length, off_t offset,
-           struct fuse_file_info *fi)
+           struct fuse_file_info *)
 {
     sparsebundle_read_operations read_ops = {
         &sparsebundle_read_process_band,
@@ -325,7 +325,7 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
 }
 #endif
 
-static int sparsebundle_release(const char *path, struct fuse_file_info *fi)
+static int sparsebundle_release(const char * /* path */, struct fuse_file_info *)
 {
     SB_DATA->times_opened--;
     syslog(LOG_DEBUG, "closed %s, now referenced %ju times",
@@ -351,7 +351,7 @@ static int sparsebundle_show_usage(char *program_name)
 
 enum { SPARSEBUNDLE_OPT_DEBUG };
 
-static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
+static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fuse_args * /* outargs */)
 {
     switch (key) {
     case SPARSEBUNDLE_OPT_DEBUG:
