@@ -96,8 +96,8 @@ static int sparsebundle_open(const char *path, struct fuse_file_info *fi)
         return -EACCES;
 
     sparsebundle->times_opened++;
-    syslog(LOG_DEBUG, "opened %s, now referenced %ju times",
-        sparsebundle->path, uintmax_t(sparsebundle->times_opened));
+    syslog(LOG_DEBUG, "opened %s%s, now referenced %ju times",
+        sparsebundle->mountpoint, path, uintmax_t(sparsebundle->times_opened));
 
     return 0;
 }
@@ -333,13 +333,13 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
 }
 #endif
 
-static int sparsebundle_release(const char * /* path */, struct fuse_file_info *)
+static int sparsebundle_release(const char *path, struct fuse_file_info *)
 {
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
     sparsebundle->times_opened--;
-    syslog(LOG_DEBUG, "closed %s, now referenced %ju times",
-        sparsebundle->path, uintmax_t(sparsebundle->times_opened));
+    syslog(LOG_DEBUG, "closed %s%s, now referenced %ju times",
+        sparsebundle->mountpoint, path, uintmax_t(sparsebundle->times_opened));
 
     if (sparsebundle->times_opened == 0) {
         syslog(LOG_DEBUG, "no more references, cleaning up");
@@ -435,6 +435,9 @@ int main(int argc, char **argv)
     if (!sparsebundle.path || !sparsebundle.mountpoint)
         return sparsebundle_show_usage(argv[0]);
 
+    syslog(LOG_DEBUG, "mounting `%s' at mount-point `%s'",
+        sparsebundle.path, sparsebundle.mountpoint);
+
     char *plist_path;
     if (asprintf(&plist_path, "%s/Info.plist", sparsebundle.path) == -1)
         sparsebundle_fatal_error("could not resolve Info.plist path");
@@ -464,8 +467,8 @@ int main(int argc, char **argv)
         }
     }
 
-    syslog(LOG_DEBUG, "initialized %s, band size %ju, total size %ju",
-        sparsebundle.path, uintmax_t(sparsebundle.band_size), uintmax_t(sparsebundle.size));
+    syslog(LOG_DEBUG, "bundle has band size %ju and total size %ju",
+        uintmax_t(sparsebundle.band_size), uintmax_t(sparsebundle.size));
 
     struct fuse_operations sparsebundle_filesystem_operations = {};
     sparsebundle_filesystem_operations.getattr = sparsebundle_getattr;
