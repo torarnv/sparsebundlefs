@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
@@ -381,6 +382,23 @@ static int sparsebundle_release(const char * /* path */, struct fuse_file_info *
     return 0;
 }
 
+__attribute__((noreturn, format(printf, 1, 2))) static void sparsebundle_fatal_error(const char *message, ...)
+{
+    fprintf(stderr, "sparsebundlefs: ");
+
+    va_list args;
+    va_start(args, message);
+    vfprintf(stderr, message, args);
+    va_end(args);
+
+    if (errno)
+        fprintf(stderr, ": %s", strerror(errno));
+
+    fprintf(stderr, "\n");
+
+    exit(EXIT_FAILURE);
+}
+
 static int sparsebundle_show_usage(char *program_name)
 {
     fprintf(stderr, "usage: %s [-o options] [-s] [-f] [-D] <sparsebundle> <mountpoint>\n", program_name);
@@ -416,10 +434,8 @@ static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fu
 static off_t read_size(const string &str)
 {
     uintmax_t value = strtoumax(str.c_str(), 0, 10);
-    if (errno == ERANGE || value > uintmax_t(numeric_limits<off_t>::max())) {
-        fprintf(stderr, "Disk image too large to be mounted (%s bytes)\n", str.c_str());
-        exit(EXIT_FAILURE);
-    }
+    if (errno == ERANGE || value > uintmax_t(numeric_limits<off_t>::max()))
+        sparsebundle_fatal_error("disk image too large (%s bytes)", str.c_str());
 
     return value;
 }
@@ -453,10 +469,8 @@ int main(int argc, char **argv)
     sparsebundle.path = abs_path;
 
     char *plist_path;
-    if (asprintf(&plist_path, "%s/Info.plist", sparsebundle.path) == -1) {
-        perror("Failed to resolve Info.plist path");
-        return EXIT_FAILURE;
-    }
+    if (asprintf(&plist_path, "%s/Info.plist", sparsebundle.path) == -1)
+        sparsebundle_fatal_error("could not resolve Info.plist path");
 
     ifstream plist_file(plist_path);
     stringstream plist_data;
