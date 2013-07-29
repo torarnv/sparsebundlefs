@@ -384,14 +384,19 @@ static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fu
     case SPARSEBUNDLE_OPT_DEBUG:
         setlogmask(LOG_UPTO(LOG_DEBUG));
         return SPARSEBUNDLE_OPT_HANDLED;
+
     case FUSE_OPT_KEY_NONOPT:
         sparsebundle_t *sparsebundle = sparsebundle_cast(data);
 
         if (!sparsebundle->path) {
-            sparsebundle->path = strdup(arg);
+            sparsebundle->path = realpath(arg, 0);
+            if (!sparsebundle->path)
+                sparsebundle_fatal_error("bad sparse-bundle `%s'", arg);
             return SPARSEBUNDLE_OPT_HANDLED;
         } else if (!sparsebundle->mountpoint) {
-            sparsebundle->mountpoint = strdup(arg);
+            sparsebundle->mountpoint = realpath(arg, 0);
+            if (!sparsebundle->mountpoint)
+                sparsebundle_fatal_error("bad mount point `%s'", arg);
             fuse_opt_add_arg(outargs, sparsebundle->mountpoint);
             return SPARSEBUNDLE_OPT_HANDLED;
         }
@@ -427,17 +432,8 @@ int main(int argc, char **argv)
     fuse_opt_parse(&args, &sparsebundle, sparsebundle_options, sparsebundle_opt_proc);
     fuse_opt_add_arg(&args, "-oro"); // Force read-only mount
 
-    if (!sparsebundle.path)
+    if (!sparsebundle.path || !sparsebundle.mountpoint)
         return sparsebundle_show_usage(argv[0]);
-
-    char *abs_path = realpath(sparsebundle.path, 0);
-    if (!abs_path) {
-        perror("Could not resolve absolute path");
-        return EXIT_FAILURE;
-    }
-
-    free(sparsebundle.path);
-    sparsebundle.path = abs_path;
 
     char *plist_path;
     if (asprintf(&plist_path, "%s/Info.plist", sparsebundle.path) == -1)
