@@ -29,6 +29,7 @@ static const char image_path[] = "/sparsebundle.dmg";
 
 struct sparsebundle_t {
     char *path;
+    char *mountpoint;
     off_t band_size;
     off_t size;
     off_t times_opened;
@@ -357,25 +358,30 @@ static int sparsebundle_show_usage(char *program_name)
     return 1;
 }
 
-enum { SPARSEBUNDLE_OPT_DEBUG };
+enum { SPARSEBUNDLE_OPT_DEBUG = 0, SPARSEBUNDLE_OPT_HANDLED = 0, SPARSEBUNDLE_OPT_IGNORED = 1 };
 
-static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fuse_args * /* outargs */)
+static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
 {
     switch (key) {
     case SPARSEBUNDLE_OPT_DEBUG:
         setlogmask(LOG_UPTO(LOG_DEBUG));
-        return 0;
+        return SPARSEBUNDLE_OPT_HANDLED;
     case FUSE_OPT_KEY_NONOPT:
         sparsebundle_t *sparsebundle = sparsebundle_cast(data);
 
-        if (sparsebundle->path)
-            return 1;
+        if (!sparsebundle->path) {
+            sparsebundle->path = strdup(arg);
+            return SPARSEBUNDLE_OPT_HANDLED;
+        } else if (!sparsebundle->mountpoint) {
+            sparsebundle->mountpoint = strdup(arg);
+            fuse_opt_add_arg(outargs, sparsebundle->mountpoint);
+            return SPARSEBUNDLE_OPT_HANDLED;
+        }
 
-        sparsebundle->path = strdup(arg);
-        return 0;
+        return SPARSEBUNDLE_OPT_IGNORED;
     }
 
-    return 1;
+    return SPARSEBUNDLE_OPT_IGNORED;
 }
 
 static off_t read_size(const string &str)
