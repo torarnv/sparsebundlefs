@@ -111,7 +111,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
     if (offset >= SB_DATA->size)
         return 0;
 
-    if (offset + length > SB_DATA->size)
+    if ( (off_t)(offset + length) > SB_DATA->size)
         length = SB_DATA->size - offset;
 
     syslog(LOG_DEBUG, "iterating %zu bytes at offset %ju", length, uintmax_t(offset));
@@ -230,7 +230,7 @@ int sparsebundle_read_buf_prepare_file(const char *path)
 
 static int sparsebundle_read_buf_process_band(const char *band_path, size_t length, off_t offset, void *read_data)
 {
-    ssize_t read = 0;
+    size_t read = 0;
 
     vector<fuse_buf> *buffers = static_cast<vector<fuse_buf>*>(read_data);
 
@@ -243,7 +243,7 @@ static int sparsebundle_read_buf_process_band(const char *band_path, size_t leng
         stat(band_path, &band_stat);
         read += max(off_t(0), min(static_cast<off_t>(length), band_stat.st_size - offset));
     } else if (errno != ENOENT) {
-        syslog(LOG_ERR, "failed to open band %s: %s", band_path, strerror(errno));
+        syslog(LOG_ERR, "read_buf: failed to open band %s: %s", band_path, strerror(errno));
         return -errno;
     }
 
@@ -269,7 +269,7 @@ static int sparsebundle_read_buf_pad_with_zeroes(size_t length, void *read_data)
 
 static void sparsebundle_read_buf_close_files()
 {
-    syslog(LOG_DEBUG, "closing %u open file descriptor(s)", SB_DATA->open_files.size());
+    syslog(LOG_DEBUG, "closing %lu open file descriptor(s)", SB_DATA->open_files.size());
 
     map<string, int>::iterator iter;
     for(iter = SB_DATA->open_files.begin(); iter != SB_DATA->open_files.end(); ++iter)
@@ -294,11 +294,11 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
     syslog(LOG_DEBUG, "asked to read %zu bytes at offset %ju using zero-copy read",
         length, uintmax_t(offset));
 
-    static struct rlimit fd_limit = { -1, -1 };
-    if (fd_limit.rlim_cur < 0)
+    static struct rlimit fd_limit = { 0, 0 };
+    if (fd_limit.rlim_cur == 0)
         getrlimit(RLIMIT_NOFILE, &fd_limit);
 
-    if (SB_DATA->open_files.size() + 1 >= fd_limit.rlim_cur) {
+    if (SB_DATA->open_files.size() > fd_limit.rlim_cur) {
         syslog(LOG_DEBUG, "hit max number of file descriptors");
         sparsebundle_read_buf_close_files();
     }
@@ -318,7 +318,7 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
 
     copy(buffers.begin(), buffers.end(), buffer_vector->buf);
 
-    syslog(LOG_DEBUG, "returning %d buffers to fuse", buffer_vector->count);
+    syslog(LOG_DEBUG, "returning %lu buffers to fuse", buffer_vector->count);
     *bufp = buffer_vector;
 
     return ret;
