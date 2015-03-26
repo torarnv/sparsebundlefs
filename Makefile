@@ -124,7 +124,7 @@ vpath %.cpp $(SRC_DIR)
 PKG_CONFIG = pkg-config
 $(call ensure_binary,$(PKG_CONFIG))
 
-override CFLAGS += -std=c++11 -Wall -pedantic -O2 -g
+override CFLAGS += -std=c++11 -Wall -Wextra -pedantic -O2 -g
 
 GCC_4_2_OR_HIGHER := $(shell expr `$(CXX) -dumpversion | sed 's/\.//g'` \>= 420)
 ifeq "$(GCC_4_2_OR_HIGHER)" "1"
