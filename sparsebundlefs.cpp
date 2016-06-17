@@ -308,8 +308,10 @@ static void sparsebundle_read_buf_close_files()
     syslog(LOG_DEBUG, "closing %u open file descriptor(s)", sparsebundle->open_files.size());
 
     map<string, int>::iterator iter;
-    for(iter = sparsebundle->open_files.begin(); iter != sparsebundle->open_files.end(); ++iter)
+    for(iter = sparsebundle->open_files.begin(); iter != sparsebundle->open_files.end(); ++iter) {
         close(iter->second);
+        syslog(LOG_DEBUG, "closed %s", iter->first.c_str());
+    }
 
     sparsebundle->open_files.clear();
 }
