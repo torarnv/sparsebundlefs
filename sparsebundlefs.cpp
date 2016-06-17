@@ -245,7 +245,7 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
 }
 
 #if FUSE_SUPPORTS_ZERO_COPY
-int sparsebundle_read_buf_prepare_file(const char *path)
+static int sparsebundle_read_buf_prepare_file(const char *path)
 {
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
