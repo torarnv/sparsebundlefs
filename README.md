@@ -129,4 +129,4 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 [fuse]: http://fuse.sourceforge.net/ "FUSE"
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
 [tmfs]: https://github.com/abique/tmfs "Time Machine File System"
-[license]: https://img.shields.io/github/license/torarnv/sparsebundlefs.svg
+[license]: https://img.shields.io/github/license/torarnv/sparsebundlefs.svg?maxAge=2592000
