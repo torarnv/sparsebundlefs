@@ -122,7 +122,7 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 
 
 
-[buildstatus]: https://secure.travis-ci.org/torarnv/sparsebundlefs.png?branch=master
+[buildstatus]: https://secure.travis-ci.org/torarnv/sparsebundlefs.svg?branch=master
 [travisci]: https://travis-ci.org/torarnv/sparsebundlefs
 [osxfuse]: http://osxfuse.github.com/ "Fuse for OSX"
 [fuse]: http://fuse.sourceforge.net/ "FUSE"
