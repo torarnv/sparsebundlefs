@@ -332,9 +332,12 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
     syslog(LOG_DEBUG, "asked to read %zu bytes at offset %ju using zero-copy read",
         length, uintmax_t(offset));
 
-    static struct rlimit fd_limit = { -1, -1 };
-    if (fd_limit.rlim_cur < 0)
+    static struct rlimit fd_limit;
+    static bool fd_limit_computed = false;
+    if (!fd_limit_computed) {
         getrlimit(RLIMIT_NOFILE, &fd_limit);
+        fd_limit_computed = true;
+    }
 
     sparsebundle_t *sparsebundle = sparsebundle_current();
     if (sparsebundle->open_files.size() + 1 >= fd_limit.rlim_cur) {
