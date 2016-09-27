@@ -1,7 +1,7 @@
 TARGET = sparsebundlefs
 
 PKG_CONFIG = pkg-config
-CFLAGS = -Wall -O2 -g
+override CFLAGS += -Wall -O2 -g
 
 GCC_4_2_OR_HIGHER := $(shell expr `$(CXX) -dumpversion | sed 's/\.//g'` \>= 420)
 ifeq "$(GCC_4_2_OR_HIGHER)" "1"
