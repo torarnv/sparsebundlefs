@@ -30,7 +30,7 @@ Or download the latest tar-ball:
 Install dependencies:
 
   - [OSXFUSE][osxfuse] on *Mac OS X*
-  - `sudo apt install libfuse-dev fuse` on Debian-based *GNU/Linux* distros
+  - `sudo apt-get install libfuse-dev fuse` on Debian-based *GNU/Linux* distros
   - Or install the latest FUSE manually from [source][fuse]
 
 Compile:
