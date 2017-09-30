@@ -196,26 +196,6 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
     return bytes_read;
 }
 
-static void sparsebundle_cleanup_open_files()
-{
-    sparsebundle_t *sparsebundle = sparsebundle_current();
-    
-    syslog(LOG_DEBUG, "lru size: %lu", sparsebundle->lru_files.size());
-    
-    
-    if (sparsebundle->lru_files.size() >= max_open_files) {
-        syslog(LOG_DEBUG, "too many open files, closing least recently opened bands");
-        while (sparsebundle->lru_files.size() * 2 >= max_open_files) {
-            const char* lru_path = sparsebundle->lru_files.back().c_str();
-            int c = close(sparsebundle->open_files[lru_path]);
-            syslog(LOG_DEBUG, "closing %s, result %i", lru_path, c);
-            sparsebundle->open_files.erase(lru_path);
-            sparsebundle->lru_files.pop_back(); // be sure to have this as a last line, otherwise it screws lru_path string
-        }
-    }    
-}
-
-
 static int sparsebundle_read_process_band(const char *band_path, size_t length, off_t offset, void *read_data)
 {
     ssize_t read = 0;
@@ -271,7 +251,26 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
 }
 
 #if FUSE_SUPPORTS_ZERO_COPY
-pthread_mutex_t open_file_lock;
+static void sparsebundle_cleanup_open_files()
+{
+    sparsebundle_t *sparsebundle = sparsebundle_current();
+    
+    syslog(LOG_DEBUG, "lru size: %zu", sparsebundle->lru_files.size());
+    
+    
+    if (sparsebundle->lru_files.size() >= max_open_files) {
+        syslog(LOG_DEBUG, "too many open files, closing least recently opened bands");
+        while (sparsebundle->lru_files.size() * 2 >= max_open_files) {
+            const char* lru_path = sparsebundle->lru_files.back().c_str();
+            int c = close(sparsebundle->open_files[lru_path]);
+            syslog(LOG_DEBUG, "closing %s, result %i", lru_path, c);
+            sparsebundle->open_files.erase(lru_path);
+            sparsebundle->lru_files.pop_back(); // be sure to have this as a last line, otherwise it screws lru_path string
+        }
+    }    
+}
+
+pthread_mutex_t lru_lock;
 
 static int sparsebundle_read_buf_prepare_file(const char *path)
 {
@@ -279,7 +278,7 @@ static int sparsebundle_read_buf_prepare_file(const char *path)
 
     int fd = -1;
     //critical section
-    pthread_mutex_lock(&open_file_lock);
+    pthread_mutex_lock(&lru_lock);
     syslog(LOG_DEBUG, "thread %zu entered critical section", (unsigned int)pthread_self());
     map<string, int>::const_iterator iter = sparsebundle->open_files.find(path);
     if (iter != sparsebundle->open_files.end()) {
@@ -293,7 +292,7 @@ static int sparsebundle_read_buf_prepare_file(const char *path)
     }
     sparsebundle->lru_files.push_front(path); // store the path on the top of LRU
     syslog(LOG_DEBUG, "thread %zu leaving critical section", (unsigned int)pthread_self());
-    pthread_mutex_unlock(&open_file_lock);
+    pthread_mutex_unlock(&lru_lock);
     //end of critical section
 
     return fd;
@@ -342,7 +341,11 @@ static void sparsebundle_read_buf_close_files()
 {
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
-    syslog(LOG_DEBUG, "closing %lu open file(s)", sparsebundle->lru_files.size());
+    syslog(LOG_DEBUG, "closing %zu open file(s)", sparsebundle->lru_files.size());
+
+    //critical section
+    pthread_mutex_lock(&lru_lock);
+    syslog(LOG_DEBUG, "thread %zu entered critical section", (unsigned int)pthread_self());
 
     while (sparsebundle->lru_files.size() > 0) {
         const char* path = sparsebundle->lru_files.back().c_str();
@@ -351,6 +354,9 @@ static void sparsebundle_read_buf_close_files()
         sparsebundle->lru_files.pop_back();
     }
 
+    syslog(LOG_DEBUG, "thread %zu leaving critical section", (unsigned int)pthread_self());
+    pthread_mutex_unlock(&lru_lock);
+    //end of critical section
 }
 
 static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
