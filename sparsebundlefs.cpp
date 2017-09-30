@@ -39,10 +39,13 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <list>
 #include <sstream>
 #include <streambuf>
 #include <string>
 #include <vector>
+#include <pthread.h>
+
 
 #include <fuse.h>
 
@@ -51,6 +54,8 @@
 using namespace std;
 
 static const char image_path[] = "/sparsebundle.dmg";
+unsigned int max_open_files = 128;
+
 
 struct sparsebundle_t {
     char *path;
@@ -60,6 +65,7 @@ struct sparsebundle_t {
     off_t times_opened;
 #if FUSE_SUPPORTS_ZERO_COPY
     map<string, int> open_files;
+    list<string> lru_files;
 #endif
 };
 
@@ -190,6 +196,26 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
     return bytes_read;
 }
 
+static void sparsebundle_cleanup_open_files()
+{
+    sparsebundle_t *sparsebundle = sparsebundle_current();
+    
+    syslog(LOG_DEBUG, "lru size: %lu", sparsebundle->lru_files.size());
+    
+    
+    if (sparsebundle->lru_files.size() >= max_open_files) {
+        syslog(LOG_DEBUG, "too many open files, closing least recently opened bands");
+        while (sparsebundle->lru_files.size() * 2 >= max_open_files) {
+            const char* lru_path = sparsebundle->lru_files.back().c_str();
+            int c = close(sparsebundle->open_files[lru_path]);
+            syslog(LOG_DEBUG, "closing %s, result %i", lru_path, c);
+            sparsebundle->open_files.erase(lru_path);
+            sparsebundle->lru_files.pop_back(); // be sure to have this as a last line, otherwise it screws lru_path string
+        }
+    }    
+}
+
+
 static int sparsebundle_read_process_band(const char *band_path, size_t length, off_t offset, void *read_data)
 {
     ssize_t read = 0;
@@ -245,23 +271,34 @@ static int sparsebundle_read(const char *path, char *buffer, size_t length, off_
 }
 
 #if FUSE_SUPPORTS_ZERO_COPY
+pthread_mutex_t open_file_lock;
+
 static int sparsebundle_read_buf_prepare_file(const char *path)
 {
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
     int fd = -1;
+    //critical section
+    pthread_mutex_lock(&open_file_lock);
+    syslog(LOG_DEBUG, "thread %zu entered critical section", (unsigned int)pthread_self());
     map<string, int>::const_iterator iter = sparsebundle->open_files.find(path);
     if (iter != sparsebundle->open_files.end()) {
         fd = iter->second;
+        sparsebundle->lru_files.remove(path); //remove path from LRU - we will store it on top in the end
     } else {
         syslog(LOG_DEBUG, "file %s not opened yet, opening", path);
+        sparsebundle_cleanup_open_files();
         fd = open(path, O_RDONLY);
         sparsebundle->open_files[path] = fd;
     }
+    sparsebundle->lru_files.push_front(path); // store the path on the top of LRU
+    syslog(LOG_DEBUG, "thread %zu leaving critical section", (unsigned int)pthread_self());
+    pthread_mutex_unlock(&open_file_lock);
+    //end of critical section
 
     return fd;
 }
-
+	
 static int sparsebundle_read_buf_process_band(const char *band_path, size_t length, off_t offset, void *read_data)
 {
     ssize_t read = 0;
@@ -305,15 +342,15 @@ static void sparsebundle_read_buf_close_files()
 {
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
-    syslog(LOG_DEBUG, "closing %u open file descriptor(s)", sparsebundle->open_files.size());
+    syslog(LOG_DEBUG, "closing %lu open file(s)", sparsebundle->lru_files.size());
 
-    map<string, int>::iterator iter;
-    for(iter = sparsebundle->open_files.begin(); iter != sparsebundle->open_files.end(); ++iter) {
-        close(iter->second);
-        syslog(LOG_DEBUG, "closed %s", iter->first.c_str());
+    while (sparsebundle->lru_files.size() > 0) {
+        const char* path = sparsebundle->lru_files.back().c_str();
+        close(sparsebundle->open_files[path]);
+        sparsebundle->open_files.erase(path);
+        sparsebundle->lru_files.pop_back();
     }
 
-    sparsebundle->open_files.clear();
 }
 
 static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
@@ -332,18 +369,6 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
     syslog(LOG_DEBUG, "asked to read %zu bytes at offset %ju using zero-copy read",
         length, uintmax_t(offset));
 
-    static struct rlimit fd_limit;
-    static bool fd_limit_computed = false;
-    if (!fd_limit_computed) {
-        getrlimit(RLIMIT_NOFILE, &fd_limit);
-        fd_limit_computed = true;
-    }
-
-    sparsebundle_t *sparsebundle = sparsebundle_current();
-    if (sparsebundle->open_files.size() + 1 >= fd_limit.rlim_cur) {
-        syslog(LOG_DEBUG, "hit max number of file descriptors");
-        sparsebundle_read_buf_close_files();
-    }
 
     ret = sparsebundle_iterate_bands(path, length, offset, &read_ops);
     if (ret < 0)
@@ -452,7 +477,7 @@ static off_t read_size(const string &str)
 
 int main(int argc, char **argv)
 {
-    openlog("sparsebundlefs", LOG_CONS | LOG_PERROR, LOG_USER);
+    openlog("sparsebundlefs", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
     setlogmask(~(LOG_MASK(LOG_DEBUG)));
 
     struct sparsebundle_t sparsebundle = {};
@@ -516,3 +541,4 @@ int main(int argc, char **argv)
 
     return fuse_main(args.argc, args.argv, &sparsebundle_filesystem_operations, &sparsebundle);
 }
+
