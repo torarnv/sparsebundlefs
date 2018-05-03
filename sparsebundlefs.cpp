@@ -264,7 +264,7 @@ static int sparsebundle_read_buf_prepare_file(const char *path)
 
 static int sparsebundle_read_buf_process_band(const char *band_path, size_t length, off_t offset, void *read_data)
 {
-    ssize_t read = 0;
+    size_t read = 0;
 
     vector<fuse_buf> *buffers = static_cast<vector<fuse_buf>*>(read_data);
 
