@@ -56,7 +56,7 @@ struct sparsebundle_t {
     char *mountpoint;
     size_t band_size;
     size_t size;
-    off_t times_opened;
+    uintmax_t times_opened;
 #if FUSE_SUPPORTS_ZERO_COPY
     map<string, int> open_files;
 #endif
@@ -370,6 +370,7 @@ static int sparsebundle_release(const char *path, struct fuse_file_info *)
 {
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
+    assert(sparsebundle->times_opened);
     sparsebundle->times_opened--;
     syslog(LOG_DEBUG, "closed %s%s, now referenced %ju times",
         sparsebundle->mountpoint, path, uintmax_t(sparsebundle->times_opened));
