@@ -49,7 +49,7 @@ To mount a `.sparsebundle` disk image, execute the following command:
 
 For example:
 
-    sparsebundlefs ~/MyDiskImage.sparsebundle /tmp/my-disk-image
+    sparsebundlefs -o allow_root ~/MyDiskImage.sparsebundle /tmp/my-disk-image
 
 This will give you a directory at the mount point with a single `sparsebundle.dmg` file.
 
