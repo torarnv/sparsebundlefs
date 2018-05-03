@@ -196,7 +196,7 @@ static int sparsebundle_read_process_band(const char *band_path, size_t length, 
     char** buffer = static_cast<char**>(read_data);
 
     syslog(LOG_DEBUG, "reading %zu bytes at offset %ju into %p",
-        length, uintmax_t(offset), *buffer);
+        length, uintmax_t(offset), static_cast<void *>(*buffer));
 
     int band_file = open(band_path, O_RDONLY);
     if (band_file != -1) {
@@ -221,7 +221,8 @@ static int sparsebundle_read_pad_with_zeroes(size_t length, void *read_data)
 {
     char** buffer = static_cast<char**>(read_data);
 
-    syslog(LOG_DEBUG, "padding %zu bytes of zeroes into %p", length, *buffer);
+    syslog(LOG_DEBUG, "padding %zu bytes of zeroes into %p",
+        length, static_cast<void *>(*buffer));
 
     memset(*buffer, 0, length);
     *buffer += length;
