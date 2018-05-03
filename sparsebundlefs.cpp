@@ -305,7 +305,7 @@ static void sparsebundle_read_buf_close_files()
 {
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
-    syslog(LOG_DEBUG, "closing %u open file descriptor(s)", sparsebundle->open_files.size());
+    syslog(LOG_DEBUG, "closing %zu open file descriptor(s)", sparsebundle->open_files.size());
 
     map<string, int>::iterator iter;
     for(iter = sparsebundle->open_files.begin(); iter != sparsebundle->open_files.end(); ++iter) {
@@ -360,7 +360,7 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
 
     copy(buffers.begin(), buffers.end(), buffer_vector->buf);
 
-    syslog(LOG_DEBUG, "returning %d buffers to fuse", buffer_vector->count);
+    syslog(LOG_DEBUG, "returning %zu buffers to fuse", buffer_vector->count);
     *bufp = buffer_vector;
 
     return ret;
