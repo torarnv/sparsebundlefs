@@ -37,7 +37,6 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <limits>
 #include <map>
 #include <sstream>
 #include <streambuf>
@@ -55,8 +54,8 @@ static const char image_path[] = "/sparsebundle.dmg";
 struct sparsebundle_t {
     char *path;
     char *mountpoint;
-    off_t band_size;
-    off_t size;
+    size_t band_size;
+    size_t size;
     off_t times_opened;
 #if FUSE_SUPPORTS_ZERO_COPY
     map<string, int> open_files;
@@ -140,7 +139,8 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
 
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
-    if (offset >= sparsebundle->size)
+    assert(offset >= 0);
+    if (static_cast<size_t>(offset) >= sparsebundle->size)
         return 0;
 
     if (offset + length > sparsebundle->size)
@@ -150,14 +150,13 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
 
     size_t bytes_read = 0;
     while (bytes_read < length) {
-        off_t band_number = (offset + bytes_read) / sparsebundle->band_size;
-        off_t band_offset = (offset + bytes_read) % sparsebundle->band_size;
+        uintmax_t band_number = (offset + bytes_read) / sparsebundle->band_size;
+        uintmax_t band_offset = (offset + bytes_read) % sparsebundle->band_size;
 
-        ssize_t to_read = min(static_cast<off_t>(length - bytes_read),
-            sparsebundle->band_size - band_offset);
+        size_t to_read = min(length - bytes_read, sparsebundle->band_size - band_offset);
 
         char *band_path;
-        if (asprintf(&band_path, "%s/bands/%jx", sparsebundle->path, uintmax_t(band_number)) == -1) {
+        if (asprintf(&band_path, "%s/bands/%jx", sparsebundle->path, band_number) == -1) {
             syslog(LOG_ERR, "failed to resolve band name");
             return -errno;
         }
@@ -173,7 +172,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
 
         free(band_path);
 
-        if (read < to_read) {
+        if (static_cast<size_t>(read) < to_read) {
             to_read = to_read - read;
             syslog(LOG_DEBUG, "missing %zu bytes from band %jx, padding with zeroes",
                 to_read, uintmax_t(band_number));
@@ -441,10 +440,10 @@ static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fu
     return SPARSEBUNDLE_OPT_IGNORED;
 }
 
-static off_t read_size(const string &str)
+static size_t read_size(const string &str)
 {
     uintmax_t value = strtoumax(str.c_str(), 0, 10);
-    if (errno == ERANGE || value > uintmax_t(numeric_limits<off_t>::max()))
+    if (errno == ERANGE)
         sparsebundle_fatal_error("disk image too large (%s bytes)", str.c_str());
 
     return value;
