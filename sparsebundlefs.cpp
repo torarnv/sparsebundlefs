@@ -153,7 +153,7 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
         uintmax_t band_number = (offset + bytes_read) / sparsebundle->band_size;
         uintmax_t band_offset = (offset + bytes_read) % sparsebundle->band_size;
 
-        size_t to_read = min(length - bytes_read, sparsebundle->band_size - band_offset);
+        size_t to_read = min(uintmax_t(length - bytes_read), sparsebundle->band_size - band_offset);
 
         char *band_path;
         if (asprintf(&band_path, "%s/bands/%jx", sparsebundle->path, band_number) == -1) {
