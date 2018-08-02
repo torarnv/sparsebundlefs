@@ -1,5 +1,9 @@
 TARGET = sparsebundlefs
 
+# Note: Doesn't work for paths with spaces in them
+SRC_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+vpath %.cpp $(SRC_DIR)
+
 PKG_CONFIG = pkg-config
 override CFLAGS += -std=c++11 -Wall -pedantic -O2 -g
 
