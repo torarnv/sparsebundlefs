@@ -1,0 +1,43 @@
+version: '3.7'
+
+x-base-service: &base-service
+  build: &base-build
+    context: .
+    dockerfile: Dockerfile.linux-gcc
+  volumes:
+    - &src-volume .:/src
+  working_dir: /build
+  entrypoint:
+    - make
+    - -f
+    - /src/Makefile
+  network_mode: none
+
+services:
+  linux-gcc-32:
+    <<: *base-service
+    build:
+      <<: *base-build
+      args:
+        - arch=i386
+    volumes:
+      - *src-volume
+      - linux-gcc-32:/build
+    environment:
+      - CFLAGS=-m32
+      - ARCH=i386
+
+  linux-gcc-64:
+    <<: *base-service
+    build:
+      <<: *base-build
+      args:
+        - arch=amd64
+    volumes:
+      - *src-volume
+      - linux-gcc-64:/build
+
+volumes:
+  linux-gcc-32:
+  linux-gcc-64:
+
