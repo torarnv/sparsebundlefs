@@ -3,6 +3,7 @@
 #
 #   $ make clean all - cleans all available platforms
 #   $ make gcc - builds on all available GCC platforms
+#   $ make check 32 - run tests on all 32-bit platforms
 #
 #  Copyright (c) 2018 Tor Arne Vestbø
 #
@@ -141,8 +142,31 @@ FUSE_FLAGS := $(shell $(PKG_CONFIG) fuse --cflags --libs)
 $(TARGET): sparsebundlefs.cpp
 	$(CXX) $< -o $@ $(CFLAGS) $(FUSE_FLAGS) $(LFLAGS) $(DEFINES)
 
+export NATIVE_PLATFORM
+
+TESTDATA_DIR := tests/data
+vpath $(TESTDATA_DIR) $(SRC_DIR)
+
+TEST_BUNDLE := $(SRC_DIR)/$(TESTDATA_DIR)/test.sparsebundle
+
+ifneq ($(filter testdata,$(ACTUAL_GOALS)),)
+.PHONY:: testdata
+endif
+
+$(TESTDATA_DIR):
+	$(call ensure_binary,hdiutil)
+	@rm -Rf $(TESTDATA_DIR) && mkdir $(TESTDATA_DIR)
+	hdiutil create -size 1TB -type SPARSEBUNDLE -fs HFS+ $(TEST_BUNDLE)
+
+check_%: check ; @:
+check: $(TARGET) $(TESTDATA_DIR)
+	@$(SRC_DIR)/testrunner.sh tests/*.sh $(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
+
 clean:
 	rm -f $(TARGET)
 	rm -Rf $(TARGET).dSYM
+
+distclean: clean
+	rm -Rf $(TESTDATA_DIR)
 
 endif

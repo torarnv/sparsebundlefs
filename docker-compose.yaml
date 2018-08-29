@@ -12,6 +12,10 @@ x-base-service: &base-service
     - -f
     - /src/Makefile
   network_mode: none
+  devices:
+    - /dev/fuse
+  cap_add:
+    - SYS_ADMIN
 
 services:
   linux-gcc-32:
