@@ -453,7 +453,7 @@ static size_t read_size(const string &str)
 
 int main(int argc, char **argv)
 {
-    openlog("sparsebundlefs", LOG_CONS | LOG_PERROR, LOG_USER);
+    openlog("sparsebundlefs", LOG_PERROR, LOG_USER);
     setlogmask(~(LOG_MASK(LOG_DEBUG)));
 
     struct sparsebundle_t sparsebundle = {};
