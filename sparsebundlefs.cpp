@@ -515,5 +515,6 @@ int main(int argc, char **argv)
     sparsebundle_filesystem_operations.read_buf = sparsebundle_read_buf;
 #endif
 
-    return fuse_main(args.argc, args.argv, &sparsebundle_filesystem_operations, &sparsebundle);
+    int ret = fuse_main(args.argc, args.argv, &sparsebundle_filesystem_operations, &sparsebundle);
+    syslog(LOG_DEBUG, "exiting with return code %d", ret);
 }
