@@ -51,12 +51,39 @@ using namespace std;
 
 static const char image_path[] = "/sparsebundle.dmg";
 
+/*
+    Size data-types used by sparsebundlefs
+
+    off_t: signed data type used for offsets into a file. Will
+    always be 64-bit due to fuse enforcing _FILE_OFFSET_BITS=64.
+
+    size_t: unsigned data type used for read lengths. Will
+    be 32-bit or 64-bit depending on the system architecture.
+
+    int: signed data type used for return values in the FUSE API.
+    Will be 32-bit on most relevant architectures, even on 64-bit.
+
+    uintmax_t: unsigned data type of maximum width. Used only for
+    printing the underlying values with a consistent string format.
+
+    To ensure that we can read large files, also on 32-bit systems,
+    we always use 64-bit data types whenever we store sizes in our
+    own data structures.
+
+    FUSE will then ensure we can read large files by using off_t
+    for the file offset, and only pass us size_t chunks to read.
+
+    Presumably FUSE never asks us to read more bytes than the int
+    return value data type can hold for its positive range, even
+    though that's a possibility with the size_t input argument.
+*/
+
 struct sparsebundle_t {
     char *path;
     char *mountpoint;
-    size_t band_size;
-    size_t size;
-    uintmax_t times_opened;
+    uint64_t band_size;
+    uint64_t size;
+    uint64_t times_opened;
 #if FUSE_SUPPORTS_ZERO_COPY
     map<string, int> open_files;
 #endif
@@ -134,29 +161,31 @@ struct sparsebundle_read_operations {
 static int sparsebundle_iterate_bands(const char *path, size_t length, off_t offset,
            struct sparsebundle_read_operations *read_ops)
 {
+    assert(length <= numeric_limits<int>::max());
+
     if (strcmp(path, image_path) != 0)
         return -ENOENT;
 
     sparsebundle_t *sparsebundle = sparsebundle_current();
 
     assert(offset >= 0);
-    if (static_cast<size_t>(offset) >= sparsebundle->size)
+    if (uint64_t(offset) >= sparsebundle->size)
         return 0;
 
-    if (offset + length > sparsebundle->size)
+    if (uint64_t(offset) + length > sparsebundle->size)
         length = sparsebundle->size - offset;
 
     syslog(LOG_DEBUG, "iterating %zu bytes at offset %ju", length, uintmax_t(offset));
 
     size_t bytes_read = 0;
     while (bytes_read < length) {
-        uintmax_t band_number = (offset + bytes_read) / sparsebundle->band_size;
-        uintmax_t band_offset = (offset + bytes_read) % sparsebundle->band_size;
+        uint64_t band_number = (offset + bytes_read) / sparsebundle->band_size;
+        uint64_t band_offset = (offset + bytes_read) % sparsebundle->band_size;
 
-        size_t to_read = min(uintmax_t(length - bytes_read), sparsebundle->band_size - band_offset);
+        size_t to_read = min(length - bytes_read, size_t(sparsebundle->band_size - band_offset));
 
         char *band_path;
-        if (asprintf(&band_path, "%s/bands/%jx", sparsebundle->path, band_number) == -1) {
+        if (asprintf(&band_path, "%s/bands/%jx", sparsebundle->path, uintmax_t(band_number)) == -1) {
             syslog(LOG_ERR, "failed to resolve band name");
             return -errno;
         }
@@ -165,14 +194,12 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
             to_read, uintmax_t(band_number), uintmax_t(band_offset));
 
         ssize_t read = read_ops->process_band(band_path, to_read, band_offset, read_ops->data);
-        if (read < 0) {
-            free(band_path);
-            return -errno;
-        }
-
         free(band_path);
 
-        if (static_cast<size_t>(read) < to_read) {
+        if (read < 0)
+            return -errno;
+
+        if (size_t(read) < to_read) {
             to_read = to_read - read;
             syslog(LOG_DEBUG, "missing %zu bytes from band %jx, padding with zeroes",
                 to_read, uintmax_t(band_number));
@@ -191,6 +218,8 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
 
 static int sparsebundle_read_process_band(const char *band_path, size_t length, off_t offset, void *read_data)
 {
+    assert(length <= numeric_limits<int>::max());
+
     ssize_t read = 0;
 
     char **buffer = static_cast<char **>(read_data);
@@ -319,6 +348,8 @@ static void sparsebundle_read_buf_close_files()
 static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
                         size_t length, off_t offset, struct fuse_file_info *)
 {
+    assert(length <= numeric_limits<int>::max());
+
     int ret = 0;
 
     vector<fuse_buf> buffers;
@@ -442,10 +473,10 @@ static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fu
     return SPARSEBUNDLE_OPT_IGNORED;
 }
 
-static size_t read_size(const string &str)
+static uint64_t read_size(const string &str)
 {
     uintmax_t value = strtoumax(str.c_str(), 0, 10);
-    if (errno == ERANGE)
+    if (errno == ERANGE || value > numeric_limits<uint64_t>::max())
         sparsebundle_fatal_error("disk image too large (%s bytes)", str.c_str());
 
     return value;
