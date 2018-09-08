@@ -126,8 +126,8 @@ static int sparsebundle_open(const char *path, struct fuse_file_info *fi)
 }
 
 struct sparsebundle_read_operations {
-    int (*process_band) (const char *, size_t, off_t, void*);
-    int (*pad_with_zeroes) (size_t, void*);
+    int (*process_band) (const char *, size_t, off_t, void *);
+    int (*pad_with_zeroes) (size_t, void *);
     void *data;
 };
 
@@ -193,7 +193,7 @@ static int sparsebundle_read_process_band(const char *band_path, size_t length, 
 {
     ssize_t read = 0;
 
-    char** buffer = static_cast<char**>(read_data);
+    char **buffer = static_cast<char **>(read_data);
 
     syslog(LOG_DEBUG, "reading %zu bytes at offset %ju into %p",
         length, uintmax_t(offset), static_cast<void *>(*buffer));
@@ -219,7 +219,7 @@ static int sparsebundle_read_process_band(const char *band_path, size_t length, 
 
 static int sparsebundle_read_pad_with_zeroes(size_t length, void *read_data)
 {
-    char** buffer = static_cast<char**>(read_data);
+    char **buffer = static_cast<char **>(read_data);
 
     syslog(LOG_DEBUG, "padding %zu bytes of zeroes into %p",
         length, static_cast<void *>(*buffer));
@@ -266,7 +266,7 @@ static int sparsebundle_read_buf_process_band(const char *band_path, size_t leng
 {
     size_t read = 0;
 
-    vector<fuse_buf> *buffers = static_cast<vector<fuse_buf>*>(read_data);
+    vector<fuse_buf> *buffers = static_cast<vector<fuse_buf> *>(read_data);
 
     syslog(LOG_DEBUG, "preparing %zu bytes at offset %ju", length,
         uintmax_t(offset));
@@ -293,7 +293,7 @@ static const char zero_device[] = "/dev/zero";
 
 static int sparsebundle_read_buf_pad_with_zeroes(size_t length, void *read_data)
 {
-    vector<fuse_buf> *buffers = static_cast<vector<fuse_buf>*>(read_data);
+    vector<fuse_buf> *buffers = static_cast<vector<fuse_buf> *>(read_data);
     int zero_device_fd = sparsebundle_read_buf_prepare_file(zero_device);
     fuse_buf buffer = { length, fuse_buf_flags(FUSE_BUF_IS_FD), 0, zero_device_fd, 0 };
     buffers->push_back(buffer);
@@ -350,7 +350,7 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
         return ret;
 
     size_t bufvec_size = sizeof(struct fuse_bufvec) + (sizeof(struct fuse_buf) * (buffers.size() - 1));
-    struct fuse_bufvec *buffer_vector = static_cast<fuse_bufvec*>(malloc(bufvec_size));
+    struct fuse_bufvec *buffer_vector = static_cast<fuse_bufvec *>(malloc(bufvec_size));
     if (buffer_vector == 0)
         return -ENOMEM;
 
