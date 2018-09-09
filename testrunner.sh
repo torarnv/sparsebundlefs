@@ -52,7 +52,7 @@ function testrunner::run_tests() {
     touch $test_output_file
     exec 4< $test_output_file
 
-    local all_testcases=($(declare -f | grep -o "^test_[a-zA-Z_]*"))
+    local all_testcases=($(cat $testsuite | grep "function .*()" | grep -o "test_[a-zA-Z_]*"))
     local requested_testcases=$testcases
     if [[ -z $testcases ]]; then
         testcases=("${all_testcases[@]}")
