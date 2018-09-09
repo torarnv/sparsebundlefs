@@ -20,8 +20,7 @@ function test_dmg_has_expected_size() {
 	test $size -eq 1099511627776
 }
 
-function teardown()
-{
+function teardown() {
 	umount $mount_dir
 	rm -Rf $mount_dir
 }
