@@ -95,8 +95,8 @@ else ifneq ($(NATIVE_PLATFORM),$(PLATFORMS))
 linux-gcc-%: docker ;
 docker:
 	$(call ensure_binary,docker-compose)
-	@docker-compose run --rm $(PLATFORMS) $(MFLAGS) $(ACTUAL_GOALS) DEBUG=$(DEBUG)
-	@stty sane # Work around docker-compose messing up the terminal
+	@docker-compose run --rm $(PLATFORMS) $(MFLAGS) $(ACTUAL_GOALS) DEBUG=$(DEBUG); \
+	stty sane # Work around docker-compose messing up the terminal
 
 $(call make_noop,ACTUAL_GOALS)
 
