@@ -63,7 +63,7 @@ This will give you read-only access to the content of the sparse-bundle disk ima
 
 By default, FUSE will restrict access to the mount point to the user that mounted the file system.
 Nobody, not even root, can access another user's FUSE mount. To override this behavior, enable
-the `allow_other` option by passing `-o allow_other` on the command line. This will allow all
+the `allow_other` option by passing `-o allow_other` on the command line. This will give all
 users on the system access to the resulting `.dmg` file. The `allow_root` option has the same
 effect, but only extends access to the root user.
 
