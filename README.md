@@ -59,6 +59,29 @@ You may then proceed to mount the `.dmg` file using regular means, *eg.*:
 
 This will give you read-only access to the content of the sparse-bundle disk image.
 
+### Access, ownership, and permissions
+
+By default, FUSE will restrict access to the mount point to the user that mounted the file system.
+Nobody, not even root, can access another user's FUSE mount. To override this behavior, enable
+the `allow_other` option by passing `-o allow_other` on the command line. This will allow all
+users on the system access to the resulting `.dmg` file. The `allow_root` option has the same
+effect, but only extends access to the root user.
+
+The ownership of the mount point and the `.dmg` file will always reflect the user who mounted
+the sparsebundle, with the group set to `nogroup` to indicate that the group has no effect on
+whether a mount is accessible or not:
+
+    -r--------  1 torarne  nogroup  1099511627776 Sep  7 20:19 /tmp/my-disk-image/sparsebundle.dmg
+
+The file permissions reflect the state of who can access the mount, with the `allow_other` and
+`allow_root` options adding the `o+r` permission to indicate that the mount is accessible for
+users beyond the owning user:
+
+    -r-----r--  1 torarne  nogroup  1099511627776 Sep  7 20:19 /tmp/my-disk-image/sparsebundle.dmg
+
+**Note:** Unless the `default_permissions` option is also enabled, the owner and mount point
+permissions are just informative, and the access control happens in FUSE based on the presence
+of `allow_other` and `allow_root`, as described in the first paragraph of this section.
 
 ### Mounting partitions at an offset
 

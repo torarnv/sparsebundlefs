@@ -33,6 +33,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/resource.h>
+#include <grp.h>
 
 #include <algorithm>
 #include <fstream>
@@ -87,6 +88,10 @@ struct sparsebundle_t {
 #if FUSE_SUPPORTS_ZERO_COPY
     map<string, int> open_files;
 #endif
+    struct {
+        bool allow_other = false;
+        bool allow_root = false;
+    } options;
 };
 
 #define sparsebundle_current() \
@@ -98,20 +103,36 @@ static int sparsebundle_getattr(const char *path, struct stat *stbuf)
 
     memset(stbuf, 0, sizeof(struct stat));
 
-    struct stat bundle_stat;
-    stat(sparsebundle->path, &bundle_stat);
-
     if (strcmp(path, "/") == 0) {
-        stbuf->st_mode = S_IFDIR | 0555;
+        stbuf->st_mode = S_IFDIR | 0500;
         stbuf->st_nlink = 3;
         stbuf->st_size = sizeof(sparsebundle_t);
     } else if (strcmp(path, image_path) == 0) {
-        stbuf->st_mode = S_IFREG | 0444;
+        stbuf->st_mode = S_IFREG | 0400;
         stbuf->st_nlink = 1;
         stbuf->st_size = sparsebundle->size;
     } else
         return -ENOENT;
 
+    // Reflect user ID of the user who mounted the file system,
+    // but prefer 'nogroup' for the group, since the group has
+    // no effect on who can access the mount.
+    stbuf->st_uid = getuid();
+    if (group *nogroup = getgrnam("nogroup"))
+        stbuf->st_gid = nogroup->gr_gid;
+    else if (group *nobody = getgrnam("nobody"))
+        stbuf->st_gid = nobody->gr_gid;
+    else
+        stbuf->st_gid = getgid();
+
+    // Once allow_other or allow_root is added into the mix we
+    // want the permissions to also reflect the the situation.
+    if (sparsebundle->options.allow_other
+        || (sparsebundle->options.allow_root && stbuf->st_uid != 0))
+        stbuf->st_mode |= S_ISDIR(stbuf->st_mode) ? 0005 : 0004;
+
+    struct stat bundle_stat;
+    stat(sparsebundle->path, &bundle_stat);
     stbuf->st_atime = bundle_stat.st_atime;
     stbuf->st_mtime = bundle_stat.st_mtime;
     stbuf->st_ctime = bundle_stat.st_ctime;
@@ -442,18 +463,36 @@ static int sparsebundle_show_usage(char *program_name)
     return 1;
 }
 
-enum { SPARSEBUNDLE_OPT_DEBUG = 0, SPARSEBUNDLE_OPT_HANDLED = 0, SPARSEBUNDLE_OPT_IGNORED = 1 };
+enum {
+    SPARSEBUNDLE_OPT_HANDLED = 0, SPARSEBUNDLE_OPT_IGNORED = 1,
+    SPARSEBUNDLE_OPT_DEBUG, SPARSEBUNDLE_OPT_ALLOW_OTHER, SPARSEBUNDLE_OPT_ALLOW_ROOT
+};
+
+struct fuse_opt sparsebundle_options[] = {
+    FUSE_OPT_KEY("-D",  SPARSEBUNDLE_OPT_DEBUG),
+    FUSE_OPT_KEY("allow_other", SPARSEBUNDLE_OPT_ALLOW_OTHER),
+    FUSE_OPT_KEY("allow_root", SPARSEBUNDLE_OPT_ALLOW_ROOT),
+    FUSE_OPT_END
+};
 
 static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
 {
+    sparsebundle_t *sparsebundle = static_cast<sparsebundle_t *>(data);
+
     switch (key) {
     case SPARSEBUNDLE_OPT_DEBUG:
         setlogmask(LOG_UPTO(LOG_DEBUG));
         return SPARSEBUNDLE_OPT_HANDLED;
 
-    case FUSE_OPT_KEY_NONOPT:
-        sparsebundle_t *sparsebundle = static_cast<sparsebundle_t *>(data);
+    case SPARSEBUNDLE_OPT_ALLOW_OTHER:
+        sparsebundle->options.allow_other = true;
+        return SPARSEBUNDLE_OPT_IGNORED;
 
+    case SPARSEBUNDLE_OPT_ALLOW_ROOT:
+        sparsebundle->options.allow_root = true;
+        return SPARSEBUNDLE_OPT_IGNORED;
+
+    case FUSE_OPT_KEY_NONOPT:
         if (!sparsebundle->path) {
             sparsebundle->path = realpath(arg, 0);
             if (!sparsebundle->path)
@@ -489,13 +528,9 @@ int main(int argc, char **argv)
 
     struct sparsebundle_t sparsebundle = {};
 
-    static struct fuse_opt sparsebundle_options[] = {
-        FUSE_OPT_KEY("-D",  SPARSEBUNDLE_OPT_DEBUG),
-        { 0, 0, 0 } // End of options
-    };
-
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     fuse_opt_parse(&args, &sparsebundle, sparsebundle_options, sparsebundle_opt_proc);
+
     fuse_opt_add_arg(&args, "-oro"); // Force read-only mount
 
     if (!sparsebundle.path || !sparsebundle.mountpoint)
@@ -503,6 +538,9 @@ int main(int argc, char **argv)
 
     syslog(LOG_DEBUG, "mounting `%s' at mount-point `%s'",
         sparsebundle.path, sparsebundle.mountpoint);
+
+    syslog(LOG_DEBUG, "mounting as uid=%d, with allow_other=%d and allow_root=%d",
+        getuid(), sparsebundle.options.allow_other, sparsebundle.options.allow_root);
 
     char *plist_path;
     if (asprintf(&plist_path, "%s/Info.plist", sparsebundle.path) == -1)
