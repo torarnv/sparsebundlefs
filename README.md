@@ -1,17 +1,17 @@
 sparsebundlefs
 ================
 
-FUSE filesystem for reading Mac OS sparse-bundle disk images.
+FUSE filesystem for reading macOS sparse-bundle disk images.
 
 [![Build Status][buildstatus]][travisci]
 [![License][license]][bsd]
 
-Mac OS X v10.5 (Leopard) introduced the concept of sparse-bundle disk images, where the data is
+Mac OS X 10.5 (Leopard) introduced the concept of sparse-bundle disk images, where the data is
 stored as a collection of small, fixed-size *band*-files instead of as a single monolithic file. This
 allows for more efficient backups of the disk image, as only the changed bands need to be
 stored.
 
-One common source of sparse-bundles is Mac OS' backup utility, *Time Machine*, which stores
+One common source of sparse-bundles is macOS' backup utility, *Time Machine*, which stores
 the backup data within a sparse-bundle image on the chosen backup volume.
 
 This software package implements a FUSE virtual filesystem for read-only access to the sparse-bundle, as if it was a single monolithic image.
@@ -29,7 +29,7 @@ Or download the latest tar-ball:
 
 Install dependencies:
 
-  - [OSXFUSE][osxfuse] on *Mac OS X*
+  - [OSXFUSE][osxfuse] on *macOS*
   - `sudo apt-get install libfuse-dev fuse` on Debian-based *GNU/Linux* distros
   - Or install the latest FUSE manually from [source][fuse]
 
