@@ -24,17 +24,19 @@
 #
 # ----------------------------------------------------------
 
-declare -i counter=0
-for color in Black Red Green Yellow Blue Magenta Cyan White; do
-    declare -r k${color}="\033[$((30 + $counter))m"
-    declare -r k${color}Background="\033[$((40 + $counter))m"
-    counter+=1
-done
-declare -r kReset="\033[0m"
-declare -r kBold="\033[1m"
-declare -r kDark="\033[2m"
-declare -r kUnderline="\033[4m"
-declare -r kInverse="\033[7m"
+if [[ -t 1 ]] && [[ $(tput colors) -ge 8 ]]; then
+    declare -i counter=0
+    for color in Black Red Green Yellow Blue Magenta Cyan White; do
+        declare -r k${color}="\033[$((30 + $counter))m"
+        declare -r k${color}Background="\033[$((40 + $counter))m"
+        counter+=1
+    done
+    declare -r kReset="\033[0m"
+    declare -r kBold="\033[1m"
+    declare -r kDark="\033[2m"
+    declare -r kUnderline="\033[4m"
+    declare -r kInverse="\033[7m"
+fi
 
 function testrunner::function_declared() {
     test "$(type -t $1)" = 'function'
