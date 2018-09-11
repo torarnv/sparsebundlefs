@@ -37,7 +37,7 @@ ifeq ($(OS),Darwin)
 else ifeq ($(OS),Linux)
   ifeq ($(ARCH),x86_64)
 	NATIVE_PLATFORM=linux-gcc-64
-else
+  else
 	NATIVE_PLATFORM=linux-gcc-32
   endif
 endif
@@ -164,7 +164,8 @@ $(TESTDATA_DIR):
 check_%: check ; @:
 check: $(TARGET) $(TESTDATA_DIR)
 	@echo "============== $(PLATFORMS) =============="
-	@$(SRC_DIR)/testrunner.sh $(TESTS_DIR)/*.sh $(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
+	@$(SRC_DIR)/testrunner.sh $(TESTS_DIR)/*.sh \
+		$(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
 
 clean:
 	rm -f $(TARGET)
