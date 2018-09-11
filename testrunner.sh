@@ -54,14 +54,14 @@ function testrunner::run_tests() {
     touch $test_output_file
     exec 4< $test_output_file
 
-    local all_testcases=($(cat $testsuite | grep "function .*()" | grep -o "test_[a-zA-Z_]*"))
+    local all_testcases=($(grep "function .*()" $testsuite | grep -o "test_[a-zA-Z_]*"))
     local requested_testcases=$testcases
     if [[ -z $testcases ]]; then
         testcases=("${all_testcases[@]}")
     else
         local -a matching_testcases
-        for testcase in "${testcases[@]}" ; do
-            if [[ "${all_testcases[@]}" =~ (^| )(test_)?${testcase}( |$) ]]; then
+        for testcase in "${testcases[@]}"; do
+            if [[ "${all_testcases[*]}" =~ (^| )(test_)?${testcase}( |$) ]]; then
                 matching_testcases+=(${BASH_REMATCH[0]})
             fi
         done
@@ -227,7 +227,7 @@ function testrunner::teardown() {
 }
 
 function testrunner::print_summary() {
-    if [[ $tests_failed -gt 0 || ($tests_total -eq 0 && ! -z "${testcases[@]}") ]]; then
+    if [[ $tests_failed -gt 0 || ($tests_total -eq 0 && ${#testcases[@]} -gt 0) ]]; then
         printf "${kRed}FAIL${kReset}"
     else
         printf "${kGreen}OK${kReset}"
