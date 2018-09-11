@@ -114,16 +114,20 @@ static int sparsebundle_getattr(const char *path, struct stat *stbuf)
     } else
         return -ENOENT;
 
-    // Reflect user ID of the user who mounted the file system,
-    // but prefer 'nogroup' for the group, since the group has
-    // no effect on who can access the mount.
+    // Reflect user ID of the user who mounted the file system
     stbuf->st_uid = getuid();
-    if (group *nogroup = getgrnam("nogroup"))
-        stbuf->st_gid = nogroup->gr_gid;
-    else if (group *nobody = getgrnam("nobody"))
-        stbuf->st_gid = nobody->gr_gid;
-    else
-        stbuf->st_gid = getgid();
+
+    static gid_t gid = []() {
+        // But prefer 'nogroup' for the group, since the group
+        // has no actual effect on who can access the mount.
+        if (group *nogroup = getgrnam("nogroup"))
+            return nogroup->gr_gid;
+        if (group *nobody = getgrnam("nobody"))
+            return nobody->gr_gid;
+        // Fall back to the mounting user
+        return getgid();
+    }();
+    stbuf->st_gid = gid;
 
     // Once allow_other or allow_root is added into the mix we
     // want the permissions to also reflect the the situation.
