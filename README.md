@@ -4,6 +4,7 @@ sparsebundlefs
 FUSE filesystem for reading macOS sparse-bundle disk images.
 
 [![Build Status][buildstatus]][travisci]
+[![CodeFactor][codefactor-badge]][codefactor-link]
 [![License][license]][bsd]
 
 Mac OS X 10.5 (Leopard) introduced the concept of sparse-bundle disk images, where the data is
@@ -148,6 +149,10 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 
 [buildstatus]: https://secure.travis-ci.org/torarnv/sparsebundlefs.svg?branch=master
 [travisci]: https://travis-ci.org/torarnv/sparsebundlefs
+
+[codefactor-badge]: https://www.codefactor.io/repository/github/torarnv/sparsebundlefs/badge
+[codefactor-link]: https://www.codefactor.io/repository/github/torarnv/sparsebundlefs
+
 [osxfuse]: http://osxfuse.github.com/ "Fuse for OSX"
 [fuse]: http://fuse.sourceforge.net/ "FUSE"
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
