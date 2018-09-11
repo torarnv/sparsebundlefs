@@ -158,7 +158,7 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 [lgtm-link]: https://lgtm.com/projects/g/torarnv/sparsebundlefs/
 
 [osxfuse]: http://osxfuse.github.com/ "Fuse for OSX"
-[fuse]: http://fuse.sourceforge.net/ "FUSE"
+[fuse]: https://github.com/libfuse/libfuse "FUSE"
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
 [tmfs]: https://github.com/abique/tmfs "Time Machine File System"
 [license]: https://img.shields.io/github/license/torarnv/sparsebundlefs.svg?maxAge=2592000
