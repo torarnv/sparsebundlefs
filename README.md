@@ -106,7 +106,7 @@ Disk Flags:
 Number  Start       End             Size            File system  Name                  Flags
  1      20480B      209735679B      209715200B      fat32        EFI System Partition  boot
  2      209735680B  1073607585791B  1073397850112B  hfsx         disk image
- ```
+```
 
 Next, use the *start* and *size* columns from the above output to create a new loopback device:
 
