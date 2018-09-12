@@ -82,7 +82,7 @@ users beyond the owning user:
     -r-----r--  1 torarne  nogroup  1099511627776 Sep  7 20:19 /tmp/my-disk-image/sparsebundle.dmg
 
 **Note:** Unless the `default_permissions` option is also enabled, the owner and mount point
-permissions are just informative, and the access control happens in FUSE based on the presence
+permissions are only informative, and the access control happens in FUSE based on the presence
 of `allow_other` and `allow_root`, as described in the first paragraph of this section.
 
 ### Mounting partitions at an offset
