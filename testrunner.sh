@@ -134,7 +134,7 @@ function testrunner::run_tests() {
     done
 
     if testrunner::function_declared teardown; then
-        teardown >>$test_output_file 2>&1
+        teardown >>$test_output_file
     fi
 
     [[ $DEBUG -eq 1 ]] && testrunner::print_test_output "Teardown"
@@ -210,14 +210,27 @@ function testrunner::print_test_output {
     fi
 }
 
-function testrunner::signal_children() {
-    signal=${1:-KILL}
-    child_pids=($(ps -o pid= -g $$ | sort --reverse))
-    # Remove first three (ps in subshell) and last (self)
-    child_pids=("${child_pids[@]:3:${#child_pids[@]}-4}")
-    for pid in "${child_pids[@]}"; do
-        echo "Sending $signal to PID $pid ($(ps -o command= $pid))"
-        kill -s $signal $pid >/dev/null 2>&1
+function testrunner::signal_children()
+{
+    local signal=${1:-TERM}
+    local pid=${2:-${BASHPID:-$$}}
+
+    local child_pids=()
+
+    IFS=
+    res=$(ps -o ppid,pid)
+    unset IFS
+    {
+        read # Skip header
+        while IFS=' ' read -r ppid cpid; do
+            test $ppid -eq $pid && child_pids+=($cpid)
+        done
+    }<<<"$res"
+
+    local p
+    for p in "${child_pids[@]}"; do
+        testrunner::signal_children $signal $p
+        kill -$signal $p >/dev/null 2>&1
     done
 }
 
@@ -276,7 +289,7 @@ for testsuite in "${testsuites[@]}"; do
         printf "tests_total+=${tests_total}; tests_failed+=${tests_failed}" >&3
 
         # Clean up if test didn't do it
-        testrunner::signal_children TERM >&2
+        testrunner::signal_children TERM
     )
     exec 4>&-
     if [[ $interrupted -eq 1 ]]; then
