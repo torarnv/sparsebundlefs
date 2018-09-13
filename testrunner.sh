@@ -221,7 +221,7 @@ function testrunner::signal_children()
     res=$(ps -o ppid,pid)
     unset IFS
     {
-        read # Skip header
+        read -r # Skip header
         while IFS=' ' read -r ppid cpid; do
             test $ppid -eq $pid && child_pids+=($cpid)
         done
