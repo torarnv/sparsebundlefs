@@ -6,7 +6,6 @@ function setup() {
         # FIXME: Find actual mount callback in fuse?
         grep -q "bundle has" $test_output_file && break || sleep 0.1
     done
-    pid=$!
     dmg_file=$mount_dir/sparsebundle.dmg
 }
 
