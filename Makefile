@@ -119,7 +119,7 @@ endif
 
 # Note: Doesn't work for paths with spaces in them
 SRC_DIR=$(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-vpath %.cpp $(SRC_DIR)
+vpath %.cpp $(SRC_DIR)/src
 
 PKG_CONFIG = pkg-config
 $(call ensure_binary,$(PKG_CONFIG))
@@ -140,10 +140,14 @@ else ifeq ($(OS),Linux)
     LFLAGS += -Wl,-rpath=$(shell $(PKG_CONFIG) fuse --variable=libdir)
 endif
 
-FUSE_FLAGS := $(shell $(PKG_CONFIG) fuse --cflags --libs)
+FUSE_CFLAGS := $(shell $(PKG_CONFIG) fuse --cflags)
+FUSE_LDFLAGS := $(shell $(PKG_CONFIG) fuse --libs)
 
-$(TARGET): sparsebundlefs.cpp
-	$(CXX) $< -o $@ $(CFLAGS) $(FUSE_FLAGS) $(LFLAGS) $(DEFINES)
+%.o: %.cpp
+	$(CXX) -c $< -o $@ $(CFLAGS) $(FUSE_CFLAGS) $(DEFINES)
+
+$(TARGET): sparsebundlefs.o
+	$(CXX) $< -o $@ $(LFLAGS) $(FUSE_LDFLAGS)
 
 SPARSEBUNDLEFS=$(abspath $(TARGET))
 export SPARSEBUNDLEFS
@@ -166,12 +170,13 @@ $(TESTDATA_DIR):
 check_%: check ; @:
 check: $(TARGET) $(TESTDATA_DIR)
 	@echo "============== $(PLATFORMS) =============="
-	@$(SRC_DIR)/testrunner.sh $(TESTS_DIR)/*.sh \
+	@$(SRC_DIR)/src/testrunner.sh $(TESTS_DIR)/*.sh \
 		$(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
 
 clean:
 	rm -f $(TARGET)
 	rm -Rf $(TARGET).dSYM
+	rm -f *.o
 
 distclean: clean
 	rm -Rf $(TESTDATA_DIR)
