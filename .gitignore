@@ -1,3 +1,5 @@
 sparsebundlefs
+hfsdump
+hfsfuse
 *.o
 *.dSYM

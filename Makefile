@@ -150,23 +150,36 @@ FUSE_LDFLAGS := $(shell $(PKG_CONFIG) fuse --libs)
 $(TARGET): sparsebundlefs.o
 	$(CXX) $< -o $@ $(LDFLAGS) $(ARCH_FLAGS) $(FUSE_LDFLAGS)
 
+HFSFUSE_DIR := $(SRC_DIR)/src/3rdparty/hfsfuse
+HFSFUSE_DEPS := $(shell find $(HFSFUSE_DIR))
+export HFSFUSE_DIR
+
+hfsfuse: $(HFSFUSE_DEPS)
+	$(if $(wildcard $(HFSFUSE_DIR)/.git),,$(error Please init and update git submodules))
+	$(call ensure_binary,git)
+	@printf "Building hfsfuse... "
+	@tmpdir=$$(mktemp -d); GIT_DIR=$(HFSFUSE_DIR)/.git GIT_WORK_TREE=$$tmpdir git checkout . \
+		&& make -C $$tmpdir CFLAGS="$(ARCH_FLAGS) -D_FILE_OFFSET_BITS=64" LDFLAGS=$(ARCH_FLAGS) >/dev/null 2>&1 \
+		&& cp $$tmpdir/hfsfuse $(CURDIR) && cp $$tmpdir/hfsdump $(CURDIR) \
+		&& printf "OK\n" && rm -Rf $$tmpdir
+
 TESTS_DIR=$(SRC_DIR)/tests
 TESTDATA_DIR := $(TESTS_DIR)/data
-TEST_BUNDLE := $(TESTDATA_DIR)/test.sparsebundle
+$(TESTDATA_DIR):
+	@mkdir $(TESTDATA_DIR)
+
+TEST_BUNDLE := $(TESTDATA_DIR)/basic.sparsebundle
 export TEST_BUNDLE
 
-ifneq ($(filter testdata,$(ACTUAL_GOALS)),)
-.PHONY:: testdata
-endif
-
-vpath $(TESTDATA_DIR) $(SRC_DIR)
-$(TESTDATA_DIR):
+$(TEST_BUNDLE): $(TESTDATA_DIR) $(HFSFUSE_DEPS)
 	$(call ensure_binary,hdiutil)
-	@rm -Rf $(TESTDATA_DIR) && mkdir $(TESTDATA_DIR)
-	hdiutil create -size 1TB -type SPARSEBUNDLE -layout NONE -fs HFS+ $(TEST_BUNDLE)
+	@test ! -e $@ || rm -Rf $@
+	@printf "Creating testdata..." \
+		&& hdiutil create -size 1TB -format SPARSEBUNDLE -layout NONE \
+			-fs HFS+ -srcfolder $(HFSFUSE_DIR) $@
 
 check_%: check ; @:
-check: $(TARGET) $(TESTDATA_DIR)
+check: $(TARGET) $(TEST_BUNDLE) hfsfuse
 	@echo "============== $(PLATFORMS) =============="
 	@PATH="$(CURDIR):$(PATH)" $(SRC_DIR)/tests/testrunner.sh $(TESTS_DIR)/*.tst \
 		$(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
@@ -174,6 +187,7 @@ check: $(TARGET) $(TESTDATA_DIR)
 clean:
 	rm -f $(TARGET)
 	rm -Rf $(TARGET).dSYM
+	rm -f hfsfuse hfsdump
 	rm -f *.o
 
 distclean: clean

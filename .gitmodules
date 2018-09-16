@@ -1,0 +1,3 @@
+[submodule "hfsfuse"]
+	path = src/3rdparty/hfsfuse
+	url = https://github.com/0x09/hfsfuse.git

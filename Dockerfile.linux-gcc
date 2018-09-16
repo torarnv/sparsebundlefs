@@ -6,6 +6,7 @@ RUN dpkg --add-architecture $arch && \
 	apt-get update && \
 	apt-get install -y \
 		build-essential \
+		git \
 		g++-multilib \
 		pkg-config:$arch \
 		libfuse-dev:$arch \
