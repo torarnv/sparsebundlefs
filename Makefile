@@ -124,9 +124,9 @@ vpath %.cpp $(SRC_DIR)
 PKG_CONFIG = pkg-config
 override CFLAGS += -std=c++11 -Wall -pedantic -O2 -g
 
-GCC_4_2_OR_HIGHER := $(shell expr `$(CXX) -dumpversion | sed 's/\.//g'` \>= 420)
-ifeq "$(GCC_4_2_OR_HIGHER)" "1"
-    CFLAGS += -march=native
+ifeq ($(ARCH),i386)
+  override CFLAGS += -m32
+  override LFLAGS += -m32
 endif
 
 DEFINES = -DFUSE_USE_VERSION=26
