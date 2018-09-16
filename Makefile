@@ -127,8 +127,7 @@ PKG_CONFIG = pkg-config
 override CFLAGS += -std=c++11 -Wall -pedantic -O2 -g
 
 ifeq ($(ARCH),i386)
-  override CFLAGS += -m32
-  override LFLAGS += -m32
+  ARCH_FLAGS := -m32
 endif
 
 DEFINES = -DFUSE_USE_VERSION=26
@@ -144,10 +143,10 @@ FUSE_CFLAGS := $(shell $(PKG_CONFIG) fuse --cflags)
 FUSE_LDFLAGS := $(shell $(PKG_CONFIG) fuse --libs)
 
 %.o: %.cpp
-	$(CXX) -c $< -o $@ $(CFLAGS) $(FUSE_CFLAGS) $(DEFINES)
+	$(CXX) -c $< -o $@ $(CFLAGS) $(ARCH_FLAGS) $(FUSE_CFLAGS) $(DEFINES)
 
 $(TARGET): sparsebundlefs.o
-	$(CXX) $< -o $@ $(LFLAGS) $(FUSE_LDFLAGS)
+	$(CXX) $< -o $@ $(LFLAGS) $(ARCH_FLAGS) $(FUSE_LDFLAGS)
 
 SPARSEBUNDLEFS=$(abspath $(TARGET))
 export SPARSEBUNDLEFS
