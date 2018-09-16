@@ -148,9 +148,6 @@ FUSE_LDFLAGS := $(shell $(PKG_CONFIG) fuse --libs)
 $(TARGET): sparsebundlefs.o
 	$(CXX) $< -o $@ $(LDFLAGS) $(ARCH_FLAGS) $(FUSE_LDFLAGS)
 
-SPARSEBUNDLEFS=$(abspath $(TARGET))
-export SPARSEBUNDLEFS
-
 TESTS_DIR=$(SRC_DIR)/tests
 TESTDATA_DIR := $(TESTS_DIR)/data
 TEST_BUNDLE := $(TESTDATA_DIR)/test.sparsebundle
@@ -169,7 +166,7 @@ $(TESTDATA_DIR):
 check_%: check ; @:
 check: $(TARGET) $(TESTDATA_DIR)
 	@echo "============== $(PLATFORMS) =============="
-	@$(SRC_DIR)/src/testrunner.sh $(TESTS_DIR)/*.sh \
+	@PATH="$(CURDIR):$(PATH)" $(SRC_DIR)/src/testrunner.sh $(TESTS_DIR)/*.sh \
 		$(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
 
 clean:
