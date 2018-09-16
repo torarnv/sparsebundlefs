@@ -77,6 +77,9 @@ make_noop = $(eval $$($1): % : ; @:)
 ensure_binary = $(if $(shell which $1),,\
 	$(error Could not find '$(strip $1)' binary))
 
+# Note: Doesn't work for paths with spaces in them
+SRC_DIR=$(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+
 # ------------ Multiple platforms ------------
 
 ifeq ($(shell expr $(words $(PLATFORMS)) \> 1), 1)
@@ -95,7 +98,8 @@ else ifneq ($(NATIVE_PLATFORM),$(PLATFORMS))
 linux-gcc-%: docker ;
 docker:
 	$(call ensure_binary,docker-compose)
-	@docker-compose run --rm $(PLATFORMS) $(MFLAGS) $(ACTUAL_GOALS) DEBUG=$(DEBUG); \
+	@docker-compose -f $(SRC_DIR)/docker-compose.yaml run --rm \
+		$(PLATFORMS) $(MFLAGS) $(ACTUAL_GOALS) DEBUG=$(DEBUG); \
 	stty sane # Work around docker-compose messing up the terminal
 
 $(call make_noop,ACTUAL_GOALS)
@@ -117,8 +121,6 @@ ifeq ($(strip $(ACTUAL_GOALS)),)
     $(NATIVE_PLATFORM): $(ACTUAL_GOALS)
 endif
 
-# Note: Doesn't work for paths with spaces in them
-SRC_DIR=$(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 vpath %.cpp $(SRC_DIR)/src
 
 PKG_CONFIG = pkg-config
