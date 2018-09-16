@@ -28,7 +28,6 @@ services:
       - *src-volume
       - linux-gcc-32:/build
     environment:
-      - CFLAGS=-m32
       - ARCH=i386
 
   linux-gcc-64:
