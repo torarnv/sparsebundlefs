@@ -138,7 +138,7 @@ ifeq ($(OS),Darwin)
     # Pick up OSXFUSE, even with pkg-config from MacPorts
     PKG_CONFIG := PKG_CONFIG_PATH=/usr/local/lib/pkgconfig $(PKG_CONFIG)
 else ifeq ($(OS),Linux)
-    LFLAGS += -Wl,-rpath=$(shell $(PKG_CONFIG) fuse --variable=libdir)
+    LDFLAGS += -Wl,-rpath=$(shell $(PKG_CONFIG) fuse --variable=libdir)
 endif
 
 FUSE_CFLAGS := $(shell $(PKG_CONFIG) fuse --cflags)
@@ -148,7 +148,7 @@ FUSE_LDFLAGS := $(shell $(PKG_CONFIG) fuse --libs)
 	$(CXX) -c $< -o $@ $(CFLAGS) $(ARCH_FLAGS) $(FUSE_CFLAGS) $(DEFINES)
 
 $(TARGET): sparsebundlefs.o
-	$(CXX) $< -o $@ $(LFLAGS) $(ARCH_FLAGS) $(FUSE_LDFLAGS)
+	$(CXX) $< -o $@ $(LDFLAGS) $(ARCH_FLAGS) $(FUSE_LDFLAGS)
 
 SPARSEBUNDLEFS=$(abspath $(TARGET))
 export SPARSEBUNDLEFS
