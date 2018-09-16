@@ -1,7 +1,7 @@
 
 function setup() {
     mount_dir=$(mktemp -d)
-    $SPARSEBUNDLEFS -s -f -D $TEST_BUNDLE $mount_dir &
+    sparsebundlefs -s -f -D $TEST_BUNDLE $mount_dir &
     for i in {0..50}; do
         # FIXME: Find actual mount callback in fuse?
         grep -q "bundle has" $test_output_file && break || sleep 0.1
