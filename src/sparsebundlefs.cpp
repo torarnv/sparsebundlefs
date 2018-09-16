@@ -590,4 +590,5 @@ int main(int argc, char **argv)
 
     int ret = fuse_main(args.argc, args.argv, &sparsebundle_filesystem_operations, &sparsebundle);
     syslog(LOG_DEBUG, "exiting with return code %d", ret);
+    return ret;
 }
