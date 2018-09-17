@@ -228,18 +228,23 @@ function testrunner::signal_children()
     local child_pids=()
 
     IFS=
-    res=$(ps -o ppid,pid)
+    res=$(ps -o pgid,ppid,pid)
     unset IFS
     {
         read -r # Skip header
-        while IFS=' ' read -r ppid cpid; do
-            test $ppid -eq $pid && child_pids+=($cpid)
+        while IFS=' ' read -r pgid ppid cpid; do
+            # Child processes
+            #test $ppid -eq $pid && child_pids+=($cpid)
+            # Process group children
+            test $pgid -eq $pid && test $cpid -ne $pid && child_pids+=($cpid)
         done
     }<<<"$res"
 
-    local p
+    IFS=$'\n' child_pids=($(sort --reverse <<<"${child_pids[*]}"))
+
     for p in "${child_pids[@]}"; do
-        testrunner::signal_children $signal $p
+        #testrunner::signal_children $signal $p
+        #echo "Signaling $p ($(ps -o pid=,command= $p)) $signal"
         kill -$signal $p >/dev/null 2>&1
     done
 }
@@ -299,7 +304,8 @@ for testsuite in "${testsuites[@]}"; do
         printf "tests_total+=${tests_total}; tests_failed+=${tests_failed}" >&3
 
         # Clean up if test didn't do it
-        testrunner::signal_children TERM
+        testrunner::signal_children TERM $$
+        testrunner::signal_children KILL $$
     )
     exec 4>&-
     if [[ $interrupted -eq 1 ]]; then
