@@ -21,6 +21,15 @@ function test_dmg_has_correct_permissions() {
     test $permissions = "-r--------"
 }
 
+function test_dmg_permissions_reflect_allow_other() {
+    local mount_dir
+    local dmg_file
+    read -r mount_dir dmg_file < <(mount_sparsebundle -o allow_other)
+    permissions=$(ls -l $dmg_file | awk '{print $1; exit}')
+    test $permissions = "-r-----r--"
+    umount $mount_dir && rm -Rf $mount_dir
+}
+
 function teardown() {
     umount $mount_dir && rm -Rf $mount_dir
 }
