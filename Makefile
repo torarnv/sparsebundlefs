@@ -166,7 +166,7 @@ $(TESTDATA_DIR):
 check_%: check ; @:
 check: $(TARGET) $(TESTDATA_DIR)
 	@echo "============== $(PLATFORMS) =============="
-	@PATH="$(CURDIR):$(PATH)" $(SRC_DIR)/src/testrunner.sh $(TESTS_DIR)/*.sh \
+	@PATH="$(CURDIR):$(PATH)" $(SRC_DIR)/tests/testrunner.sh $(TESTS_DIR)/*.tst \
 		$(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
 
 clean:

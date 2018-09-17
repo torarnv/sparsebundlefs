@@ -1,3 +1,4 @@
+#!/usr/bin/env testrunner.sh
 
 function setup() {
     test ! -z "$TEST_BUNDLE"
