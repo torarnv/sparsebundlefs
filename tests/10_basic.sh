@@ -1,5 +1,6 @@
 
 function setup() {
+    test ! -z "$TEST_BUNDLE"
     mount_dir=$(mktemp -d)
     sparsebundlefs -s -f -D $TEST_BUNDLE $mount_dir &
     for i in {0..50}; do
