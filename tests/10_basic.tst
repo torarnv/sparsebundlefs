@@ -6,11 +6,6 @@ function setup() {
     mount_sparsebundle
 }
 
-function test_dmg_exists_after_mounting() {
-    ls -al $mount_dir
-    test -f $dmg_file
-}
-
 function test_dmg_has_expected_size() {
     size=$(ls -dn $dmg_file | awk '{print $5; exit}')
     test $size -eq 1099511627776
