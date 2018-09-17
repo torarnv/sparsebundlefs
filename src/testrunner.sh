@@ -117,7 +117,7 @@ function testrunner::run_tests() {
     fi
 
     if [[ -z $testcases ]]; then
-        printf "${kUnderline}No matching tests for '$requested_testcases' in ${testsuite}${kReset}\n\n"
+        printf "${kUnderline}No matching tests for '$requested_testcases' in ${pretty_testsuite}${kReset}\n\n"
         return;
     fi
 
