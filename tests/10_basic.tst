@@ -3,7 +3,7 @@
 source "$(dirname "$0")/testhelpers.sh"
 
 function setup() {
-    mount_sparsebundle
+    read -r mount_dir dmg_file < <(mount_sparsebundle)
 }
 
 function test_dmg_has_expected_size() {

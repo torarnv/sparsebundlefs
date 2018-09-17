@@ -3,7 +3,7 @@
 source "$(dirname "$0")/testhelpers.sh"
 
 function setup() {
-    mount_sparsebundle -o allow_other
+    read -r mount_dir dmg_file < <(mount_sparsebundle -o allow_other)
 }
 
 function test_dmg_has_correct_permissions() {

@@ -9,4 +9,6 @@ function mount_sparsebundle() {
         kill -0 $pid >/dev/null 2>&1
         test -f $dmg_file && break || sleep 0.1
     done
+
+    echo $mount_dir "$mount_dir/sparsebundle.dmg"
 }
