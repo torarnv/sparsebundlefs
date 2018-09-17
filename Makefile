@@ -157,6 +157,17 @@ ifneq ($(filter testdata,$(ACTUAL_GOALS)),)
 .PHONY:: testdata
 endif
 
+HFSFUSE_DIR := $(SRC_DIR)/src/3rdparty/hfsfuse
+hfsdump: hfsfuse
+hfsfuse: $(HFSFUSE_DIR)
+	$(if $(wildcard $(HFSFUSE_DIR)/.git),,$(error Please init and update git submodules))
+	$(call ensure_binary,git)
+	@printf "Building hfsfuse... "
+	@tmpdir=$$(mktemp -d); GIT_DIR=$(HFSFUSE_DIR)/.git GIT_WORK_TREE=$$tmpdir git checkout . \
+		&& make -C $$tmpdir CFLAGS=$(ARCH_FLAGS) LDFLAGS=$(ARCH_FLAGS) >/dev/null 2>&1 \
+		&& cp $$tmpdir/hfsfuse $(CURDIR) && cp $$tmpdir/hfsdump $(CURDIR) \
+		&& printf "OK\n" && rm -Rf $$tmpdir
+
 vpath $(TESTDATA_DIR) $(SRC_DIR)
 $(TESTDATA_DIR):
 	$(call ensure_binary,hdiutil)
@@ -164,13 +175,14 @@ $(TESTDATA_DIR):
 	hdiutil create -size 1TB -type SPARSEBUNDLE -layout NONE -fs HFS+ $(TEST_BUNDLE)
 
 check_%: check ; @:
-check: $(TARGET) $(TESTDATA_DIR)
+check: $(TARGET) $(TESTDATA_DIR) hfsdump
 	@echo "============== $(PLATFORMS) =============="
 	@PATH="$(CURDIR):$(PATH)" $(SRC_DIR)/tests/testrunner.sh $(TESTS_DIR)/*.tst \
 		$(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
 
 clean:
 	rm -f $(TARGET)
+	rm -f hfsfuse hfsdump
 	rm -f *.o
 
 distclean: clean
