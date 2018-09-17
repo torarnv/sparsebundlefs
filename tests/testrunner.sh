@@ -24,6 +24,15 @@
 #
 # ----------------------------------------------------------
 
+pgid=$(ps -o pgid= $$)
+if [[ $pgid -ne $$ ]]; then
+    if [[ $(uname -s) == "Darwin" ]]; then
+        exec script -q /dev/null $0 $*
+    else
+        exec setsid $0 $*
+    fi
+fi
+
 if [[ -t 1 ]] && [[ $(tput colors) -ge 8 ]]; then
     declare -i counter=0
     for color in Black Red Green Yellow Blue Magenta Cyan White; do
