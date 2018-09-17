@@ -48,6 +48,54 @@ function testrunner::absolute_path() {
 
 declare test_output_dir=$(mktemp -d)
 
+function testrunner::run_test() {
+    local testcase=$1
+
+    local pretty_testcase=${testcase#test_}
+    local pretty_testcase=${pretty_testcase//[_]/ }
+    printf -- "- ${pretty_testcase} "
+
+    test_failure=""
+    trap 'testrunner::register_failure "$BASH_COMMAND" $? && return' ERR INT
+
+    # Work around older bash versions not getting location correct on error
+    set -o functrace
+    local -a actual_lineno
+    local -a actual_source
+    trap 'actual_lineno+=($LINENO); actual_source+=(${BASH_SOURCE[0]})' DEBUG
+
+    ${testcase} >>$test_output_file 2>&1
+    trap - ERR INT DEBUG
+
+    if [[ -z "$test_failure" ]]; then
+        printf "${kGreen}✔${kReset}\n"
+
+        if [[ $DEBUG -eq 1 ]]; then
+            testrunner::print_test_output
+        fi
+        return 0
+    else
+        tests_failed+=1
+        printf "${kRed}✘${kReset}\n"
+
+        IFS='|' read -r filename line_number expression \
+            evaluated_expression exit_code <<< "$test_failure"
+
+        testrunner::print_location $filename $line_number
+
+        printf "Expression:\n\n"
+        printf " ${kBold}${expression}${kReset}"
+        if [[ $evaluated_expression != $expression ]]; then
+            printf " (${evaluated_expression})"
+        fi
+        printf "\n\nFailed with exit code ${kBold}${exit_code}${kReset}\n"
+
+        testrunner::print_test_output
+
+        return 1
+    fi
+}
+
 function testrunner::run_tests() {
     local pretty_testsuite=$(basename $testsuite)
     local test_output_file="${test_output_dir}/${pretty_testsuite}.log"
@@ -73,71 +121,24 @@ function testrunner::run_tests() {
         return;
     fi
 
-    printf "${kUnderline}Running ${#testcases[@]} tests from ${pretty_testsuite}...${kReset}\n"
+    printf "${kUnderline}Running ${#testcases[@]} tests from ${pretty_testsuite}...${kReset}\n\n"
 
     if testrunner::function_declared setup; then
-        setup >>$test_output_file 2>&1
-    fi
-
-    if [[ $DEBUG -eq 0 ]] || ! testrunner::print_test_output "Setup"; then
-        printf "\n"
+        testrunner::run_test setup
+        test $? -eq 0 || return
     fi
 
     local test_failure
     for testcase in "${testcases[@]}" ; do
         tests_total+=1
 
-        local pretty_testcase=${testcase#test_}
-        local pretty_testcase=${pretty_testcase//[_]/ }
-        printf -- "- ${pretty_testcase} "
-
-        test_failure=""
-        trap 'testrunner::register_failure "$BASH_COMMAND" $?' ERR INT
-
-        # Work around older bash versions not getting location correct on error
-        set -o functrace
-        local -a actual_lineno
-        local -a actual_source
-        trap 'actual_lineno+=($LINENO); actual_source+=(${BASH_SOURCE[0]})' DEBUG
-
-        ${testcase} >>$test_output_file 2>&1
-        trap - ERR INT DEBUG
-
-        if [[ -z "$test_failure" ]]; then
-            printf "${kGreen}✔${kReset}\n"
-
-            if [[ $DEBUG -eq 1 ]]; then
-                testrunner::print_test_output
-            fi
-        else
-            tests_failed+=1
-            printf "${kRed}✘${kReset}\n"
-
-            IFS='|' read -r filename line_number expression \
-                evaluated_expression exit_code <<< "$test_failure"
-
-            testrunner::print_location $filename $line_number
-
-            printf "Expression:\n\n"
-            printf " ${kBold}${expression}${kReset}"
-            if [[ $evaluated_expression != $expression ]]; then
-                printf " (${evaluated_expression})"
-            fi
-            printf "\n\nFailed with exit code ${kBold}${exit_code}${kReset}\n"
-
-            testrunner::print_test_output
-
-            if [[ ${exit_code} -eq 130 ]]; then
-                break; # Interrupted
-            fi
-        fi
+        testrunner::run_test $testcase
+        test $? -eq 0 || break
     done
 
     if testrunner::function_declared teardown; then
-        teardown >>$test_output_file
+        testrunner::run_test teardown
     fi
-
-    [[ $DEBUG -eq 1 ]] && testrunner::print_test_output "Teardown"
 
     if [[ -z "$test_failure" ]]; then
         printf "\n" # Blank line in case the last test passed
