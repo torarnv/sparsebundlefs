@@ -163,7 +163,7 @@ vpath $(TESTDATA_DIR) $(SRC_DIR)
 $(TESTDATA_DIR):
 	$(call ensure_binary,hdiutil)
 	@rm -Rf $(TESTDATA_DIR) && mkdir $(TESTDATA_DIR)
-	hdiutil create -size 1TB -type SPARSEBUNDLE -fs HFS+ $(TEST_BUNDLE)
+	hdiutil create -size 1TB -type SPARSEBUNDLE -layout NONE -fs HFS+ $(TEST_BUNDLE)
 
 check_%: check ; @:
 check: $(TARGET) $(TESTDATA_DIR)
