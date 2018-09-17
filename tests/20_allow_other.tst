@@ -12,6 +12,5 @@ function test_dmg_has_correct_permissions() {
 }
 
 function teardown() {
-    umount $mount_dir
-    rm -Rf $mount_dir
+    umount $mount_dir && rm -Rf $mount_dir
 }
