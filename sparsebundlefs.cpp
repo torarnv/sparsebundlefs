@@ -536,6 +536,7 @@ int main(int argc, char **argv)
     fuse_opt_parse(&args, &sparsebundle, sparsebundle_options, sparsebundle_opt_proc);
 
     fuse_opt_add_arg(&args, "-oro"); // Force read-only mount
+    fuse_opt_add_arg(&args, "-s"); // Force single-threaded operation
 
     if (!sparsebundle.path || !sparsebundle.mountpoint)
         return sparsebundle_show_usage(argv[0]);
