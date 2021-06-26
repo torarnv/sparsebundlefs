@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <poll.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -389,15 +390,39 @@ static int sparsebundle_read_buf(const char *path, struct fuse_bufvec **bufp,
     syslog(LOG_DEBUG, "asked to read %zu bytes at offset %ju using zero-copy read",
         length, uintmax_t(offset));
 
-    static struct rlimit fd_limit;
-    static bool fd_limit_computed = false;
-    if (!fd_limit_computed) {
+    static rlim_t max_open_files = []() {
+        struct rlimit fd_limit;
         getrlimit(RLIMIT_NOFILE, &fd_limit);
-        fd_limit_computed = true;
-    }
+        auto fd_max = fd_limit.rlim_cur - 1;
+        syslog(LOG_DEBUG, "maximum file descriptor number %ju", uintmax_t(fd_max));
+
+        // Check how many of the file descriptors are available
+        std::vector<pollfd> file_descriptors(fd_max);
+        for (unsigned i = 0; i < file_descriptors.size(); ++i) {
+            file_descriptors[i].fd = i;
+            // We don't really care about these states, but we have
+            // to specify something for poll to give us the POLLNVAL
+            // we do care about.
+            file_descriptors[i].events = POLLRDNORM | POLLWRNORM;
+        }
+        if (poll(file_descriptors.data(), file_descriptors.size(), 0) == -1) {
+            syslog(LOG_ERR, "failed to resolve available file descriptors: %s", strerror(errno));
+            return fd_max;
+        }
+
+        rlim_t available_fds = 0;
+        for (auto file_descriptor : file_descriptors) {
+            if (file_descriptor.revents & POLLNVAL)
+                ++available_fds;
+        }
+        syslog(LOG_DEBUG, "%ju available file descriptors (%ju in use)",
+            uintmax_t(available_fds), uintmax_t(fd_max - available_fds));
+
+        return available_fds;
+    }();
 
     sparsebundle_t *sparsebundle = sparsebundle_current();
-    if (sparsebundle->open_files.size() + 1 >= fd_limit.rlim_cur) {
+    if (sparsebundle->open_files.size() + 1 >= max_open_files) {
         syslog(LOG_DEBUG, "hit max number of file descriptors");
         sparsebundle_read_buf_close_files();
     }
