@@ -178,11 +178,12 @@ $(TEST_BUNDLE): $(TESTDATA_DIR) $(HFSFUSE_DEPS)
 		&& hdiutil create -size 1TB -format SPARSEBUNDLE -layout NONE \
 			-fs HFS+ -srcfolder $(HFSFUSE_DIR) $@
 
+test_%: check ; @:
 check_%: check ; @:
 check: $(TARGET) $(TEST_BUNDLE) hfsfuse
 	@echo "============== $(PLATFORMS) =============="
 	@PATH="$(CURDIR):$(PATH)" $(SRC_DIR)/tests/testrunner.sh $(TESTS_DIR)/*.tst \
-		$(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS)))
+		$(subst check_,test_,$(filter check_%,$(ACTUAL_GOALS))) $(filter test_%,$(ACTUAL_GOALS))
 
 clean:
 	rm -f $(TARGET)
