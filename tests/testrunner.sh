@@ -120,6 +120,11 @@ function testrunner::run_tests() {
         fi
     done
 
+    if [[ -z $all_testcases ]]; then
+        printf "${kUnderline}No tests in ${pretty_testsuite}${kReset}\n\n"
+        return;
+    fi
+
     local requested_testcases=$testcases
     if [[ -z $testcases ]]; then
         testcases=("${all_testcases[@]}")
