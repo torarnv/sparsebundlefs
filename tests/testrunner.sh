@@ -112,6 +112,14 @@ function testrunner::run_tests() {
     exec 4< $test_output_file
 
     local all_testcases=($(grep "function .*()" $testsuite | grep -o "test_[a-zA-Z_]*"))
+    for testcase_num in "${!all_testcases[@]}"; do
+        testcase="${all_testcases[$testcase_num]}"
+        # Make sure testcase is actually a defined function
+        if ! testrunner::function_declared $testcase; then
+            unset 'all_testcases[testcase_num]'
+        fi
+    done
+
     local requested_testcases=$testcases
     if [[ -z $testcases ]]; then
         testcases=("${all_testcases[@]}")
