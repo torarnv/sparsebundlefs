@@ -275,8 +275,10 @@ static int sparsebundle_iterate_bands(const char *path, size_t length, off_t off
         ssize_t read = read_ops->process_band(band_path, to_read, band_offset, read_ops->data);
         free(band_path);
 
-        if (read < 0)
-            return -errno;
+        if (read < 0) {
+            // Got -errno from processing
+            return read;
+        }
 
         if (size_t(read) < to_read) {
             to_read = to_read - read;
