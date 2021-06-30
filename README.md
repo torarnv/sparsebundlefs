@@ -55,9 +55,13 @@ For example:
 
 This will give you a directory at the mount point with a single `sparsebundle.dmg` file.
 
-You may then proceed to mount the `.dmg` file using regular means, *eg.*:
+You may then proceed to mount the `.dmg` file using regular means, e.g. for HFS:
 
     mount -o loop -t hfsplus /tmp/my-disk-image/sparsebundle.dmg /mnt/my-disk
+
+Or, for Apple File System (APFS) partitions, using [apfs-fuse][apfs-fuse]:
+
+    apfs-fuse /tmp/my-disk-image/sparsebundle.dmg /mnt/my-disk
 
 This will give you read-only access to the content of the sparse-bundle disk image.
 
@@ -161,4 +165,5 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 [fuse]: https://github.com/libfuse/libfuse "FUSE"
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
 [tmfs]: https://github.com/abique/tmfs "Time Machine File System"
+[apfs-fuse]: https://github.com/sgan81/apfs-fuse "APFS Fuse Driver"
 [license]: https://img.shields.io/github/license/torarnv/sparsebundlefs.svg?maxAge=2592000
