@@ -229,9 +229,13 @@ static int sparsebundle_open_file(const char *path)
 
                 sparsebundle_close_files();
                 return sparsebundle_open_file(path);
+            } else if (errno == ENOENT) {
+                syslog(LOG_DEBUG, "%s does not exist", path);
+                return -1;
+            } else {
+                syslog(LOG_ERR, "failed to open %s: %s", path, strerror(errno));
+                return -1;
             }
-            syslog(LOG_ERR, "failed to open %s: %s", path, strerror(errno));
-            return -1;
         }
 
         sparsebundle->open_files[path] = fd;
@@ -319,7 +323,7 @@ static int sparsebundle_read_process_band(const char *band_path, size_t length, 
 
     int band_file_fd = sparsebundle_open_file(band_path);
     if (band_file_fd == -1)
-        return -errno;
+        return errno == ENOENT ? 0 : -errno;
 
     read = pread(band_file_fd, *buffer, length, offset);
     if (read == -1) {
@@ -371,7 +375,7 @@ static int sparsebundle_read_buf_process_band(const char *band_path, size_t leng
 
     int band_file_fd = sparsebundle_open_file(band_path);
     if (band_file_fd == -1)
-        return -errno;
+        return errno == ENOENT ? 0 : -errno;
 
     struct stat band_stat;
     stat(band_path, &band_stat);
