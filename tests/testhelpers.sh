@@ -53,7 +53,7 @@ function _test_can_handle_ulimit() {
         cat $f > /dev/null
     done
 
-    cat $test_output_file | grep -q "too many open files"
+    cat $test_output_file | grep -q "too many open file descriptors"
 
     umount $hfs_dir && rm -Rf $hfs_dir
     umount $mount_dir && rm -Rf $mount_dir
