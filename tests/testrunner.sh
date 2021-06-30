@@ -55,6 +55,11 @@ function testrunner::absolute_path() {
     printf "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 }
 
+function testrunner::pid() {
+    # Portable subshell-aware PID
+    exec bash -c 'echo $PPID'
+}
+
 declare test_output_dir=$(mktemp -d)
 
 function testrunner::run_test() {
@@ -162,6 +167,10 @@ function testrunner::run_tests() {
         testrunner::run_test teardown
     fi
 
+    # Clean up if test didn't do it
+    testrunner::signal_children TERM
+    testrunner::signal_children KILL
+
     if [[ -z "$test_failure" ]]; then
         printf "\n" # Blank line in case the last test passed
     fi
@@ -236,7 +245,8 @@ function testrunner::print_test_output {
 function testrunner::signal_children()
 {
     local signal=${1:-TERM}
-    local pid=${2:-${BASHPID:-$$}}
+    local subshell_pid=$(testrunner::pid)
+    local pid=${2:-${BASHPID:-${subshell_pid:-$$}}}
 
     local child_pids=()
 
@@ -316,7 +326,6 @@ for testsuite in "${testsuites[@]}"; do
         # Export results out of sub-shell
         printf "tests_total+=${tests_total}; tests_failed+=${tests_failed}" >&3
 
-        # Clean up if test didn't do it
         testrunner::signal_children TERM $$
         testrunner::signal_children KILL $$
     )
