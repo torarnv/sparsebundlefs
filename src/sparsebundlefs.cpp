@@ -255,9 +255,12 @@ static int sparsebundle_read_process_band(const char *band_path, size_t length, 
     syslog(LOG_DEBUG, "reading %zu bytes at offset %ju into %p",
         length, uintmax_t(offset), static_cast<void *>(*buffer));
 
+    syslog(LOG_DEBUG, "opening %s", band_path);
     int band_file = open(band_path, O_RDONLY);
     if (band_file != -1) {
         read = pread(band_file, *buffer, length, offset);
+
+        syslog(LOG_DEBUG, "closing %s", band_path);
         close(band_file);
 
         if (read == -1) {
