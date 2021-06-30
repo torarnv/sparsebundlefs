@@ -92,6 +92,7 @@ struct sparsebundle_t {
         bool allow_other = false;
         bool allow_root = false;
         bool noreadbuf = false;
+        bool always_close = false;
     } options;
 };
 
@@ -212,6 +213,14 @@ static int sparsebundle_open_file(const char *path)
     if (iter != sparsebundle->open_files.end()) {
         fd = iter->second;
     } else {
+        if (sparsebundle->options.always_close) {
+            // Escape hatch in case the logic below doesn't work.
+            // We're closing files here, instead of after use, since
+            // we don't know when the file will be read in the case
+            // of read_buf (but looking at the code, it looks like
+            // it's synchronous).
+            sparsebundle_close_files();
+        }
         syslog(LOG_DEBUG, "file %s not opened yet, opening", path);
         if ((fd = open(path, O_RDONLY)) == -1) {
             if (errno == EMFILE) {
@@ -471,7 +480,7 @@ static int sparsebundle_show_usage(char *program_name)
 enum {
     SPARSEBUNDLE_OPT_HANDLED = 0, SPARSEBUNDLE_OPT_IGNORED = 1,
     SPARSEBUNDLE_OPT_DEBUG, SPARSEBUNDLE_OPT_ALLOW_OTHER, SPARSEBUNDLE_OPT_ALLOW_ROOT,
-    SPARSEBUNDLE_OPT_NOREADBUF
+    SPARSEBUNDLE_OPT_NOREADBUF, SPARSEBUNDLE_OPT_ALWAYS_CLOSE
 };
 
 struct fuse_opt sparsebundle_options[] = {
@@ -479,6 +488,7 @@ struct fuse_opt sparsebundle_options[] = {
     FUSE_OPT_KEY("allow_other", SPARSEBUNDLE_OPT_ALLOW_OTHER),
     FUSE_OPT_KEY("allow_root", SPARSEBUNDLE_OPT_ALLOW_ROOT),
     FUSE_OPT_KEY("noreadbuf", SPARSEBUNDLE_OPT_NOREADBUF),
+    FUSE_OPT_KEY("always_close", SPARSEBUNDLE_OPT_ALWAYS_CLOSE),
     FUSE_OPT_END
 };
 
@@ -501,6 +511,10 @@ static int sparsebundle_opt_proc(void *data, const char *arg, int key, struct fu
 
     case SPARSEBUNDLE_OPT_NOREADBUF:
         sparsebundle->options.noreadbuf = true;
+        return SPARSEBUNDLE_OPT_HANDLED;
+
+    case SPARSEBUNDLE_OPT_ALWAYS_CLOSE:
+        sparsebundle->options.always_close = true;
         return SPARSEBUNDLE_OPT_HANDLED;
 
     case FUSE_OPT_KEY_NONOPT:
