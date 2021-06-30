@@ -222,7 +222,7 @@ static int sparsebundle_open_file(const char *path)
                 return sparsebundle_open_file(path);
             }
             syslog(LOG_ERR, "failed to open %s: %s", path, strerror(errno));
-            return -errno;
+            return -1;
         }
 
         sparsebundle->open_files[path] = fd;
