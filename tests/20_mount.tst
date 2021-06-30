@@ -3,7 +3,7 @@
 source "$(dirname "$0")/testhelpers.sh"
 
 function setup() {
-    mount_sparsebundle
+    read -r mount_dir dmg_file < <(mount_sparsebundle)
 }
 
 function test_dmg_has_correct_number_of_blocks() {
@@ -18,6 +18,5 @@ function test_dmg_contents_is_same_as_testdata() {
 }
 
 function teardown() {
-    umount $mount_dir
-    rm -Rf $mount_dir
+    umount $mount_dir && rm -Rf $mount_dir
 }
