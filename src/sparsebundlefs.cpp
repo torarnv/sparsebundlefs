@@ -306,9 +306,9 @@ static int sparsebundle_read_process_band(const char *band_path, size_t length, 
     syslog(LOG_DEBUG, "reading %zu bytes at offset %ju into %p",
         length, uintmax_t(offset), static_cast<void *>(*buffer));
 
-    int band_file = sparsebundle_open_file(band_path);
-    if (band_file != -1) {
-        read = pread(band_file, *buffer, length, offset);
+    int band_file_fd = sparsebundle_open_file(band_path);
+    if (band_file_fd != -1) {
+        read = pread(band_file_fd, *buffer, length, offset);
         if (read == -1) {
             syslog(LOG_ERR, "failed to read band: %s", strerror(errno));
             return -errno;
