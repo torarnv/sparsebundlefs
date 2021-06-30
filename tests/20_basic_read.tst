@@ -2,19 +2,22 @@
 
 source "$(dirname "$0")/testhelpers.sh"
 
+mount_options="-o noreadbuf"
+
 function setup() {
-    read -r mount_dir dmg_file < <(mount_sparsebundle)
+    read -r mount_dir dmg_file < <(mount_sparsebundle $mount_options)
 }
 
 function test_dmg_has_correct_number_of_blocks() {
-    hfsdump $dmg_file | grep "total_blocks: 268435456"
+    _test_dmg_has_correct_number_of_blocks
 }
 
 function test_dmg_contents_is_same_as_testdata() {
-	for f in $(ls $HFSFUSE_DIR/src); do
-		echo "Diffing $HFSFUSE_DIR/src/$f"
-		diff $HFSFUSE_DIR/src/$f <(hfsdump $dmg_file read "/src/$f")
-	done
+	_test_dmg_contents_is_same_as_testdata
+}
+
+function test_can_handle_ulimit() {
+	_test_can_handle_ulimit
 }
 
 function teardown() {
