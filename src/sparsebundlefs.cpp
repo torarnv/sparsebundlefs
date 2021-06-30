@@ -307,14 +307,12 @@ static int sparsebundle_read_process_band(const char *band_path, size_t length, 
         length, uintmax_t(offset), static_cast<void *>(*buffer));
 
     int band_file_fd = sparsebundle_open_file(band_path);
-    if (band_file_fd != -1) {
-        read = pread(band_file_fd, *buffer, length, offset);
-        if (read == -1) {
-            syslog(LOG_ERR, "failed to read band: %s", strerror(errno));
-            return -errno;
-        }
-    } else if (errno != ENOENT) {
-        syslog(LOG_ERR, "failed to open band %s: %s", band_path, strerror(errno));
+    if (band_file_fd == -1)
+        return -errno;
+
+    read = pread(band_file_fd, *buffer, length, offset);
+    if (read == -1) {
+        syslog(LOG_ERR, "failed to read band: %s", strerror(errno));
         return -errno;
     }
 
@@ -361,14 +359,12 @@ static int sparsebundle_read_buf_process_band(const char *band_path, size_t leng
         uintmax_t(offset));
 
     int band_file_fd = sparsebundle_open_file(band_path);
-    if (band_file_fd != -1) {
-        struct stat band_stat;
-        stat(band_path, &band_stat);
-        read += max(off_t(0), min(static_cast<off_t>(length), band_stat.st_size - offset));
-    } else if (errno != ENOENT) {
-        syslog(LOG_ERR, "failed to open band %s: %s", band_path, strerror(errno));
+    if (band_file_fd == -1)
         return -errno;
-    }
+
+    struct stat band_stat;
+    stat(band_path, &band_stat);
+    read += max(off_t(0), min(static_cast<off_t>(length), band_stat.st_size - offset));
 
     if (read > 0) {
         fuse_buf buffer = { read, fuse_buf_flags(FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK), 0, band_file_fd, offset };
