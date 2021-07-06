@@ -6,6 +6,7 @@ FUSE filesystem for reading macOS sparse-bundle disk images.
 [![Build Status][buildstatus]][travisci]
 [![CodeFactor][codefactor-badge]][codefactor-link]
 [![LGTM][lgtm-badge]][lgtm-link]
+![CodeQL][codeql-badge]
 [![License][license]][bsd]
 
 Mac OS X 10.5 (Leopard) introduced the concept of sparse-bundle disk images, where the data is
@@ -168,6 +169,8 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 
 [lgtm-badge]: https://img.shields.io/lgtm/alerts/g/torarnv/sparsebundlefs.svg?label=LGTM
 [lgtm-link]: https://lgtm.com/projects/g/torarnv/sparsebundlefs/
+
+[codeql-badge]: https://github.com/torarnv/sparsebundlefs/workflows/CodeQL/badge.svg
 
 [osxfuse]: http://osxfuse.github.com/ "Fuse for OSX"
 [fuse]: https://github.com/libfuse/libfuse "FUSE"
