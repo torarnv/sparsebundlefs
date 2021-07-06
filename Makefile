@@ -135,7 +135,7 @@ endif
 DEFINES = -DFUSE_USE_VERSION=26
 
 ifeq ($(OS),Darwin)
-    # Pick up OSXFUSE, even with pkg-config from MacPorts
+    # Pick up macFUSE, even with pkg-config from MacPorts
     PKG_CONFIG := PKG_CONFIG_PATH=/usr/local/lib/pkgconfig $(PKG_CONFIG)
 else ifeq ($(OS),Linux)
     LDFLAGS += -Wl,-rpath=$(shell $(PKG_CONFIG) fuse --variable=libdir)

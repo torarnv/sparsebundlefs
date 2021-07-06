@@ -32,7 +32,7 @@ Or download the latest tar-ball:
 
 Install dependencies:
 
-  - [OSXFUSE][osxfuse] on *macOS*
+  - [macFUSE][macfuse] on *macOS*, e.g. via `brew install macfuse`
   - `sudo apt-get install libfuse-dev fuse` on Debian-based *GNU/Linux* distros
   - Or install the latest FUSE manually from [source][fuse]
 
@@ -172,7 +172,7 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 
 [codeql-badge]: https://github.com/torarnv/sparsebundlefs/workflows/CodeQL/badge.svg
 
-[osxfuse]: http://osxfuse.github.com/ "Fuse for OSX"
+[macfuse]: https://osxfuse.github.io/ "Fuse for macOS"
 [fuse]: https://github.com/libfuse/libfuse "FUSE"
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
 [tmfs]: https://github.com/abique/tmfs "Time Machine File System"
