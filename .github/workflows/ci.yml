@@ -1,0 +1,25 @@
+name: "Continuous Integration"
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: sudo apt-get install libfuse-dev fuse
+
+    - name: Build
+      run: make
+
+    - name: Install
+      uses: sudo make install
