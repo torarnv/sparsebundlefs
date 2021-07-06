@@ -3,7 +3,7 @@ sparsebundlefs
 
 FUSE filesystem for reading macOS sparse-bundle disk images.
 
-[![Build Status][buildstatus]][travisci]
+[![Continuous Integration][ci-badge]][ci-link]
 [![CodeFactor][codefactor-badge]][codefactor-link]
 [![LGTM][lgtm-badge]][lgtm-link]
 ![CodeQL][codeql-badge]
@@ -161,8 +161,8 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 
 
 
-[buildstatus]: https://secure.travis-ci.org/torarnv/sparsebundlefs.svg?branch=master
-[travisci]: https://travis-ci.org/torarnv/sparsebundlefs
+[ci-badge]: https://github.com/torarnv/sparsebundlefs/actions/workflows/ci.yml/badge.svg
+[ci-link]: https://github.com/torarnv/sparsebundlefs/actions/workflows/ci.yml
 
 [codefactor-badge]: https://www.codefactor.io/repository/github/torarnv/sparsebundlefs/badge
 [codefactor-link]: https://www.codefactor.io/repository/github/torarnv/sparsebundlefs
