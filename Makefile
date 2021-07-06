@@ -194,13 +194,17 @@ clean:
 distclean: clean
 	rm -Rf $(TESTDATA_DIR)
 
+# Install
+
+prefix = /usr/local
+
 .PHONY: install
 install: sparsebundlefs
-	install -d "$(DESTDIR)$(INSTALL_PREFIX)/bin"
-	install -m 755 sparsebundlefs "$(DESTDIR)$(INSTALL_PREFIX)/bin/"
+	install -d "$(DESTDIR)$(prefix)/bin"
+	install -m 755 sparsebundlefs "$(DESTDIR)$(prefix)/bin/"
 
 .PHONY: uninstall
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/sparsebundlefs
+	rm -f $(DESTDIR)$(prefix)/bin/sparsebundlefs
 
 endif
