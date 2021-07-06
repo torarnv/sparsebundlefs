@@ -7,16 +7,44 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
+  macos:
+    name: macOS
+    runs-on: macos-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
     - name: Install dependencies
-      run: sudo apt-get install libfuse-dev fuse
+      run: brew install osxfuse
+
+    - name: Build
+      run: make
+
+    - name: Install
+      run: sudo make install
+
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, i386]
+
+    env:
+      ARCH: ${{ matrix.arch }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo dpkg --add-architecture $ARCH
+        sudo apt-get update
+        sudo apt-get install -y g++-multilib pkg-config:$ARCH libfuse-dev:$ARCH fuse:$ARCH
 
     - name: Build
       run: make
