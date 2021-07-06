@@ -42,6 +42,14 @@ Compile:
 **Note:** If your FUSE installation is in a non-default location you may have to
 export `PKG_CONFIG_PATH` before compiling.
 
+Install:
+
+    sudo make install
+
+The default install prefix is `/usr/local`. To choose another prefix pass
+`prefix=/foo/bar` when installing. The `DESTDIR` variable for packaging is
+also supported.
+
 Usage
 -----
 
