@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, i386]
+        arch: [amd64, i386]
 
     env:
       ARCH: ${{ matrix.arch }}
