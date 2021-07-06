@@ -159,7 +159,7 @@ hfsfuse: $(HFSFUSE_DEPS)
 	$(call ensure_binary,git)
 	@printf "Building hfsfuse... \n"
 	@tmpdir=$$(mktemp -d); GIT_DIR=$(HFSFUSE_DIR)/.git GIT_WORK_TREE=$$tmpdir git checkout . \
-		&& make -C $$tmpdir CFLAGS="$(ARCH_FLAGS) -D_FILE_OFFSET_BITS=64" LDFLAGS=$(ARCH_FLAGS) \
+		&& GIT_DIR=$(HFSFUSE_DIR)/.git make -C $$tmpdir CONFIG_CFLAGS="$(ARCH_FLAGS) -D_FILE_OFFSET_BITS=64" LDFLAGS=$(ARCH_FLAGS) >/dev/null \
 		&& cp $$tmpdir/hfsfuse $(CURDIR) && cp $$tmpdir/hfsdump $(CURDIR) \
 		&& printf "OK\n" && rm -Rf $$tmpdir
 
