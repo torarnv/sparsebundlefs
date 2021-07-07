@@ -7,7 +7,7 @@ FUSE filesystem for reading macOS sparse-bundle disk images.
 ![CodeQL][codeql-badge]
 [![CodeFactor][codefactor-badge]][codefactor-link]
 [![LGTM][lgtm-badge]][lgtm-link]
-[![License][license]][bsd]
+[![License][license-badge]][bsd]
 
 Mac OS X 10.5 (Leopard) introduced the concept of sparse-bundle disk images, where the data is
 stored as a collection of small, fixed-size *band*-files instead of as a single monolithic file. This
@@ -172,9 +172,10 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 
 [codeql-badge]: https://github.com/torarnv/sparsebundlefs/workflows/CodeQL/badge.svg
 
+[license-badge]: https://img.shields.io/github/license/torarnv/sparsebundlefs?color=informational&label=License
+
 [macfuse]: https://osxfuse.github.io/ "Fuse for macOS"
 [fuse]: https://github.com/libfuse/libfuse "FUSE"
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
 [tmfs]: https://github.com/abique/tmfs "Time Machine File System"
 [apfs-fuse]: https://github.com/sgan81/apfs-fuse "APFS Fuse Driver"
-[license]: https://img.shields.io/github/license/torarnv/sparsebundlefs.svg?maxAge=2592000&color=blue
