@@ -177,4 +177,4 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 [bsd]: http://opensource.org/licenses/BSD-2-Clause "BSD two-clause license"
 [tmfs]: https://github.com/abique/tmfs "Time Machine File System"
 [apfs-fuse]: https://github.com/sgan81/apfs-fuse "APFS Fuse Driver"
-[license]: https://img.shields.io/github/license/torarnv/sparsebundlefs.svg?maxAge=2592000
+[license]: https://img.shields.io/github/license/torarnv/sparsebundlefs.svg?maxAge=2592000&color=blue
