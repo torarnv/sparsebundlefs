@@ -569,14 +569,19 @@ int main(int argc, char **argv)
     syslog(LOG_DEBUG, "mounting `%s' at mount-point `%s'",
         sparsebundle.path, sparsebundle.mountpoint);
 
-    syslog(LOG_DEBUG, "mounting as uid=%d, with allow_other=%d and allow_root=%d",
-        getuid(), sparsebundle.options.allow_other, sparsebundle.options.allow_root);
+    char *last_dot = strrchr(sparsebundle.path, '.');
+    if (!last_dot || strcmp(last_dot, ".sparsebundle") != 0)
+        sparsebundle_fatal_error("%s is not a sparse bundle (wrong extension)",
+            sparsebundle.path);
 
     char *plist_path;
     if (asprintf(&plist_path, "%s/Info.plist", sparsebundle.path) == -1)
         sparsebundle_fatal_error("could not resolve Info.plist path");
 
     ifstream plist_file(plist_path);
+    if (!plist_file.is_open())
+        sparsebundle_fatal_error("failed to open %s", plist_path);
+
     stringstream plist_data;
     plist_data << plist_file.rdbuf();
 
@@ -603,6 +608,12 @@ int main(int argc, char **argv)
 
     syslog(LOG_DEBUG, "bundle has band size %ju and total size %ju",
         uintmax_t(sparsebundle.band_size), uintmax_t(sparsebundle.size));
+
+    if (!sparsebundle.band_size || !sparsebundle.size)
+        sparsebundle_fatal_error("invalid (zero) band size or total size");
+
+    syslog(LOG_DEBUG, "mounting as uid=%d, with allow_other=%d and allow_root=%d",
+        getuid(), sparsebundle.options.allow_other, sparsebundle.options.allow_root);
 
     struct fuse_operations sparsebundle_filesystem_operations = {};
     sparsebundle_filesystem_operations.getattr = sparsebundle_getattr;
