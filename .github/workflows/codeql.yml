@@ -30,7 +30,7 @@ jobs:
       uses: github/codeql-action/init@v1
       with:
         languages: ${{ matrix.language }}
-        
+
     - name: Install dependencies
       run: sudo apt-get install libfuse-dev fuse
 
