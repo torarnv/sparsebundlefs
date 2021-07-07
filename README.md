@@ -4,9 +4,9 @@ sparsebundlefs
 FUSE filesystem for reading macOS sparse-bundle disk images.
 
 [![Continuous Integration][ci-badge]][ci-link]
+![CodeQL][codeql-badge]
 [![CodeFactor][codefactor-badge]][codefactor-link]
 [![LGTM][lgtm-badge]][lgtm-link]
-![CodeQL][codeql-badge]
 [![License][license]][bsd]
 
 Mac OS X 10.5 (Leopard) introduced the concept of sparse-bundle disk images, where the data is
@@ -167,7 +167,7 @@ This software is licensed under the [BSD two-clause "simplified" license][bsd].
 [codefactor-badge]: https://www.codefactor.io/repository/github/torarnv/sparsebundlefs/badge
 [codefactor-link]: https://www.codefactor.io/repository/github/torarnv/sparsebundlefs
 
-[lgtm-badge]: https://img.shields.io/lgtm/alerts/g/torarnv/sparsebundlefs.svg?label=LGTM
+[lgtm-badge]: https://img.shields.io/lgtm/grade/cpp/github/torarnv/sparsebundlefs?label=LGTM
 [lgtm-link]: https://lgtm.com/projects/g/torarnv/sparsebundlefs/
 
 [codeql-badge]: https://github.com/torarnv/sparsebundlefs/workflows/CodeQL/badge.svg
