@@ -32,8 +32,8 @@ Or download the latest tar-ball:
 
 Install dependencies:
 
-  - [macFUSE][macfuse] on *macOS*, e.g. via `brew install macfuse`
-  - `sudo apt-get install libfuse-dev fuse` on Debian-based *GNU/Linux* distros
+  - [macFUSE][macfuse] on *macOS*, e.g. via `brew install pkgconf macfuse`
+  - `sudo apt-get install pkg-config libfuse-dev fuse` on Debian-based *GNU/Linux* distros
   - Or install the latest FUSE manually from [source][fuse]
 
 Compile:
